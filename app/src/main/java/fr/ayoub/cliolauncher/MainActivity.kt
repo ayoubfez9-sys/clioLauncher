@@ -30,6 +30,7 @@ import fr.ayoub.cliolauncher.data.SpeedProvider
 import fr.ayoub.cliolauncher.data.WeatherRepository
 import fr.ayoub.cliolauncher.media.MediaRepository
 import fr.ayoub.cliolauncher.ui.AppDrawer
+import fr.ayoub.cliolauncher.ui.CanDiagScreen
 import fr.ayoub.cliolauncher.ui.HomeScreen
 import fr.ayoub.cliolauncher.ui.SettingsScreen
 import fr.ayoub.cliolauncher.ui.VehicleScreen
@@ -84,6 +85,7 @@ private fun Root(activity: ComponentActivity) {
                     Screen.APPS -> AppDrawer()
                     Screen.VEHICLE -> VehicleScreen()
                     Screen.SETTINGS -> SettingsScreen()
+                    Screen.CAN_DIAG -> CanDiagScreen()
                 }
             }
             // Mode nuit : voile sombre (ne bloque pas les touches)

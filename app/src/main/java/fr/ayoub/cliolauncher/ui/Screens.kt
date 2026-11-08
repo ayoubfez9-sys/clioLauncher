@@ -295,6 +295,13 @@ fun SettingsScreen() {
                     }
                 }
 
+                Section("SYNCHRO AVEC LA VOITURE (CAN)")
+                SettingRow(
+                    "Diagnostic du boîtier CAN",
+                    "Cherche comment l'autoradio partage les portes, feux et vitesse",
+                    "Ouvrir",
+                ) { AppState.screen = Screen.CAN_DIAG }
+
                 Section("ÉCRAN D'ACCUEIL")
                 SettingRow(
                     "Launcher par défaut",

@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-enum class Screen { HOME, APPS, VEHICLE, SETTINGS }
+enum class Screen { HOME, APPS, VEHICLE, SETTINGS, CAN_DIAG }
 
 /** Etat general de l'interface. */
 object AppState {
