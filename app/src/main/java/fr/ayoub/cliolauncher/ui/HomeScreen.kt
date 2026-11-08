@@ -39,6 +39,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,6 +58,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.sp
 import fr.ayoub.cliolauncher.data.AppSettings
 import fr.ayoub.cliolauncher.data.AppState
@@ -70,6 +73,7 @@ import fr.ayoub.cliolauncher.data.weatherIcon
 import fr.ayoub.cliolauncher.data.weatherLabel
 import fr.ayoub.cliolauncher.media.MediaRepository
 import fr.ayoub.cliolauncher.media.NowPlayingInfo
+import fr.ayoub.cliolauncher.render.CarView
 import fr.ayoub.cliolauncher.ui.theme.C
 import fr.ayoub.cliolauncher.ui.theme.Fonts
 import fr.ayoub.cliolauncher.ui.theme.RoundButton
@@ -239,47 +243,64 @@ private fun CenterPanel(modifier: Modifier) {
 }
 
 /**
- * Plateau rond avec anneau bleu lumineux.
- * A l'etape 2, le modele 3D de la Clio sera pose dessus.
+ * Clio en 3D sur son plateau lumineux.
+ * Si la 3D echoue (pilote graphique), on affiche le plateau 2D a la place.
  */
 @Composable
 private fun CarStage(modifier: Modifier) {
+    var failed by remember { mutableStateOf(false) }
+    val viewRef = remember { arrayOfNulls<CarView>(1) }
+    // Le mode allege change la resolution : on recree la vue quand il change.
+    val lite = AppSettings.liteMode
     Box(modifier) {
-        Canvas(Modifier.fillMaxSize()) {
-            val c = Offset(size.width / 2f, size.height * 0.62f)
-            val r = min(size.width * 0.34f, size.height * 1.1f)
-            // tout est dessine en cercles "ecrases" pour donner la perspective
-            scale(scaleX = 1f, scaleY = 0.28f, pivot = c) {
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        listOf(C.Accent.copy(alpha = 0.16f), Color.Transparent), center = c, radius = r * 1.5f
-                    ),
-                    radius = r * 1.5f, center = c,
-                )
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        listOf(Color(0xFF1B2433), Color(0xFF0C1017)), center = c, radius = r
-                    ),
-                    radius = r, center = c,
-                )
-                for (i in 5 downTo 1) {
-                    drawCircle(
-                        color = C.Accent.copy(alpha = 0.07f),
-                        radius = r, center = c,
-                        style = Stroke(width = (i * 7).dp.toPx()),
-                    )
-                }
-                drawCircle(color = C.Accent, radius = r, center = c, style = Stroke(width = 3.dp.toPx()))
-                drawCircle(
-                    color = C.Accent.copy(alpha = 0.25f), radius = r * 0.82f, center = c,
-                    style = Stroke(width = 1.5.dp.toPx()),
+        if (failed) {
+            FlatStage(Modifier.fillMaxSize())
+            T(
+                "3D indisponible sur cet appareil", 13.sp, Fonts.medium, C.Muted,
+                modifier = Modifier.align(Alignment.Center),
+            )
+        } else {
+            key(lite) {
+                AndroidView(
+                    factory = { ctx ->
+                        CarView(ctx, lite).also { v ->
+                            viewRef[0] = v
+                            v.onFailed = { failed = true }
+                        }
+                    },
+                    update = { v ->
+                        v.bodyColor = AppSettings.bodyColor
+                        v.lite = AppSettings.liteMode
+                    },
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }
-        T(
-            "Modèle 3D : étape 2", 13.sp, Fonts.medium, C.Muted,
-            modifier = Modifier.align(Alignment.Center),
-        )
+    }
+    LaunchedEffect(AppState.recenterTick) {
+        if (AppState.recenterTick > 0) viewRef[0]?.recenter()
+    }
+}
+
+/** Plateau 2D de secours (sans voiture). */
+@Composable
+private fun FlatStage(modifier: Modifier) {
+    Canvas(modifier) {
+        val c = Offset(size.width / 2f, size.height * 0.62f)
+        val r = min(size.width * 0.34f, size.height * 1.1f)
+        scale(scaleX = 1f, scaleY = 0.28f, pivot = c) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    listOf(C.Accent.copy(alpha = 0.16f), Color.Transparent), center = c, radius = r * 1.5f
+                ),
+                radius = r * 1.5f, center = c,
+            )
+            drawCircle(
+                brush = Brush.radialGradient(listOf(Color(0xFF1B2433), Color(0xFF0C1017)), center = c, radius = r),
+                radius = r, center = c,
+            )
+            drawCircle(color = C.Accent, radius = r, center = c, style = Stroke(width = 3.dp.toPx()))
+        }
     }
 }
 

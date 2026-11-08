@@ -268,11 +268,11 @@ fun SettingsScreen() {
                     Launch.openAppInfo(ctx)
                 }
 
-                Section("MODÈLE 3D (ÉTAPE 2)")
+                Section("MODÈLE 3D")
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         T("Mode allégé", 18.sp, Fonts.semi)
-                        T("Sans reflets ni ombres, pour un autoradio plus fluide", 13.sp, Fonts.medium, C.Muted)
+                        T("Moins de reflets et résolution réduite, si la 3D saccade", 13.sp, Fonts.medium, C.Muted, maxLines = 2)
                     }
                     Switch(checked = AppSettings.liteMode, onCheckedChange = { AppSettings.liteMode = it; save() })
                 }
