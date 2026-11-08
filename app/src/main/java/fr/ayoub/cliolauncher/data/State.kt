@@ -45,6 +45,7 @@ object VehicleState {
     var speedKmh by mutableStateOf<Int?>(null)
     var speedTime by mutableLongStateOf(0L)
     var speedSource by mutableStateOf(DataSource.GPS)
+    var batteryVolts by mutableStateOf<Float?>(null)
 
     fun isOpen(d: Door) = doors[d] == true
 
@@ -62,6 +63,8 @@ object AppSettings {
     var carplayPkg by mutableStateOf<String?>(null)
     var radioPkg by mutableStateOf<String?>(null)
     var liteMode by mutableStateOf(false)
+    /** Suivre les portes et les feux de la vraie voiture (boitier CAN). */
+    var canSync by mutableStateOf(true)
     /** Couleur de carrosserie (ARGB), utilisee par le modele 3D a l'etape 2. */
     var bodyColor by mutableStateOf(0xFF1F5FD0.toInt())
 
@@ -72,6 +75,7 @@ object AppSettings {
         carplayPkg = sp.getString("carplayPkg", null)
         radioPkg = sp.getString("radioPkg", null)
         liteMode = sp.getBoolean("liteMode", false)
+        canSync = sp.getBoolean("canSync", true)
         bodyColor = sp.getInt("bodyColor", bodyColor)
     }
 
@@ -82,6 +86,7 @@ object AppSettings {
             .putString("carplayPkg", carplayPkg)
             .putString("radioPkg", radioPkg)
             .putBoolean("liteMode", liteMode)
+            .putBoolean("canSync", canSync)
             .putInt("bodyColor", bodyColor)
             .apply()
     }

@@ -24,6 +24,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import fr.ayoub.cliolauncher.data.AppSettings
 import fr.ayoub.cliolauncher.data.AppState
 import fr.ayoub.cliolauncher.data.AppsRepository
+import fr.ayoub.cliolauncher.data.CarBridge
 import fr.ayoub.cliolauncher.data.Permissions
 import fr.ayoub.cliolauncher.data.Screen
 import fr.ayoub.cliolauncher.data.SpeedProvider
@@ -44,6 +45,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Fonts.init(this)
         AppSettings.load(this)
+        CarBridge.start()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // On cache seulement la barre d'etat : la barre de navigation Junsun
         // (accueil, retour, volume) reste visible.

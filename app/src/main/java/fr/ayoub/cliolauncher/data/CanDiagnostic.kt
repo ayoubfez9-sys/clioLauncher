@@ -100,6 +100,12 @@ object CanDiagnostic {
             ?: sb.appendLine("(liste /dev non lisible)")
         sb.appendLine()
 
+        sb.appendLine("--- API du fabricant ---")
+        sb.append(CarBridge.describeApis())
+        val snap = try { CarBridge.read() } catch (t: Throwable) { null }
+        sb.appendLine("Lecture : portes=${snap?.doorsRaw} phares=${snap?.headlight} (${snap?.headlightError ?: "ok"}) batterie=${snap?.battery} vitesse='${snap?.speedRaw}'")
+        sb.appendLine()
+
         val cands = candidates(ctx)
         sb.appendLine("--- Applis systeme candidates (${cands.size}) ---")
         for (c in cands) {

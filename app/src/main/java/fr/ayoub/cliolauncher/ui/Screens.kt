@@ -53,6 +53,8 @@ import fr.ayoub.cliolauncher.data.AppEntry
 import fr.ayoub.cliolauncher.data.AppSettings
 import fr.ayoub.cliolauncher.data.AppState
 import fr.ayoub.cliolauncher.data.AppsRepository
+import fr.ayoub.cliolauncher.data.CarBridge
+import fr.ayoub.cliolauncher.data.DataSource
 import fr.ayoub.cliolauncher.data.Door
 import fr.ayoub.cliolauncher.data.Launch
 import fr.ayoub.cliolauncher.data.Permissions
@@ -141,12 +143,25 @@ fun VehicleScreen() {
             ) {
                 T("D'OÙ VIENNENT LES DONNÉES", 12.sp, Fonts.semi, C.Muted, spacing = 2.sp)
                 InfoLine("Vitesse", "GPS de l'autoradio (réel)", C.Ok)
-                InfoLine("Feux", "Bouton manuel (${VehicleState.lightsSource.label})", C.Warn)
-                InfoLine("Portes", "Boutons manuels (${VehicleState.doorsSource.label})", C.Warn)
+                val lightsCan = VehicleState.lightsSource == DataSource.CAN && AppSettings.canSync
+                val doorsCan = VehicleState.doorsSource == DataSource.CAN && AppSettings.canSync
+                InfoLine(
+                    "Feux",
+                    if (lightsCan) "Voiture (boîtier CAN), bouton = test" else "Bouton manuel (pas encore de donnée voiture)",
+                    if (lightsCan) C.Ok else C.Warn,
+                )
+                InfoLine(
+                    "Portes",
+                    if (doorsCan) "Voiture (boîtier CAN), boutons = test" else "Boutons manuels (pas encore de donnée voiture)",
+                    if (doorsCan) C.Ok else C.Warn,
+                )
+                VehicleState.batteryVolts?.let { v ->
+                    InfoLine("Batterie", String.format(java.util.Locale.FRANCE, "%.1f V", v), C.Ok)
+                }
                 Spacer(Modifier.height(6.dp))
                 T(
-                    "Les feux s'allument sur la Clio 3D et une porte ouverte clignote en orange sur la voiture. " +
-                        "La lecture du boîtier CAN SimpleSoft sera étudiée à l'étape 4.",
+                    "Les données voiture s'affichent dès qu'elles changent (ouvre une porte, allume les phares). " +
+                        "Réglages → Diagnostic du boîtier CAN montre les valeurs brutes en direct.",
                     14.sp, Fonts.medium, C.Muted, maxLines = 6,
                 )
             }
@@ -296,6 +311,16 @@ fun SettingsScreen() {
                 }
 
                 Section("SYNCHRO AVEC LA VOITURE (CAN)")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        T("Suivre la vraie voiture", 18.sp, Fonts.semi)
+                        T("Portes et phares lus depuis le boîtier CAN de l'autoradio", 13.sp, Fonts.medium, C.Muted, maxLines = 2)
+                    }
+                    Switch(checked = AppSettings.canSync, onCheckedChange = {
+                        AppSettings.canSync = it; save()
+                        if (it) CarBridge.resync()
+                    })
+                }
                 SettingRow(
                     "Diagnostic du boîtier CAN",
                     "Cherche comment l'autoradio partage les portes, feux et vitesse",

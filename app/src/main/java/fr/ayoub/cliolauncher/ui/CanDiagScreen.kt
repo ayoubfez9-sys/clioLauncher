@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.ayoub.cliolauncher.data.AppState
 import fr.ayoub.cliolauncher.data.CanDiagnostic
+import fr.ayoub.cliolauncher.data.CarBridge
 import fr.ayoub.cliolauncher.data.Screen
 import fr.ayoub.cliolauncher.ui.theme.C
 import fr.ayoub.cliolauncher.ui.theme.Fonts
@@ -100,14 +101,42 @@ fun CanDiagScreen() {
                 Modifier.width(300.dp).fillMaxHeight().panel().padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                T("CE QUE ÇA FAIT", 12.sp, Fonts.semi, C.Accent, spacing = 2.sp)
+                T("DONNÉES VOITURE EN DIRECT", 12.sp, Fonts.semi, C.Accent, spacing = 2.sp)
+                val snap = CarBridge.last
+                if (snap == null) {
+                    T("Lecture…", 14.sp, Fonts.medium, C.Muted)
+                } else {
+                    val names = listOf("AV gauche", "AV droite", "AR gauche", "AR droite", "Coffre")
+                    names.forEachIndexed { i, n ->
+                        val raw = snap.doorsRaw.getOrElse(i) { "" }
+                        val txt = when (raw) { "2" -> "OUVERTE"; "1" -> "fermée"; "" -> "illisible"; else -> "« $raw »" }
+                        Row {
+                            T(n, 14.sp, Fonts.medium, C.Muted, modifier = Modifier.width(110.dp))
+                            T(txt, 14.sp, Fonts.bold, if (raw == "2") C.Warn else if (raw == "1") C.Ok else C.Muted)
+                        }
+                    }
+                    Row {
+                        T("Phares", 14.sp, Fonts.medium, C.Muted, modifier = Modifier.width(110.dp))
+                        T(
+                            when (snap.headlight) { true -> "ALLUMÉS"; false -> "éteints"; null -> "indisponible" },
+                            14.sp, Fonts.bold, if (snap.headlight == null) C.Muted else C.Ok,
+                        )
+                    }
+                    snap.battery?.let { b ->
+                        Row {
+                            T("Batterie", 14.sp, Fonts.medium, C.Muted, modifier = Modifier.width(110.dp))
+                            T(String.format(java.util.Locale.FRANCE, "%.1f V", b), 14.sp, Fonts.bold, C.Ok)
+                        }
+                    }
+                    if (snap.speedRaw.isNotEmpty()) Row {
+                        T("Vitesse CAN", 14.sp, Fonts.medium, C.Muted, modifier = Modifier.width(110.dp))
+                        T(snap.speedRaw, 14.sp, Fonts.bold, C.Text)
+                    }
+                }
                 T(
-                    "Cet outil repère les applis de l'autoradio qui gèrent le boîtier CAN SimpleSoft. " +
-                        "Il ne modifie rien.\n\n" +
-                        "1. Touche « Exporter ».\n" +
-                        "2. Copie le dossier Téléchargements/ClioDiag sur une clé USB.\n" +
-                        "3. Envoie ces fichiers à Claude pour analyse.",
-                    14.sp, Fonts.medium, C.Muted, maxLines = 14,
+                    "Ouvre une porte ou allume les phares : la valeur doit changer en 1 seconde. " +
+                        "« Exporter » enregistre le rapport dans Téléchargements/ClioDiag.",
+                    12.sp, Fonts.medium, C.Muted, maxLines = 5,
                 )
                 Spacer(Modifier.weight(1f))
                 if (status.isNotEmpty()) T(status, 13.sp, Fonts.semi, if (busy) C.Warn else C.Ok, maxLines = 4)
