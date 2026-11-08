@@ -233,7 +233,7 @@ private fun CenterPanel(modifier: Modifier) {
         val open = Door.entries.filter { VehicleState.isOpen(it) }
         if (open.isNotEmpty()) {
             Row(
-                Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp)
+                Modifier.align(Alignment.BottomCenter).padding(bottom = 92.dp)
                     .clip(RoundedCornerShape(18.dp))
                     .background(Color(0xFF2A1A05))
                     .border(1.5.dp, C.Warn, RoundedCornerShape(18.dp))
