@@ -137,7 +137,6 @@ object CanDiagnostic {
      * @return le nombre de fichiers ecrits
      */
     fun export(ctx: Context, reportText: String, maxApks: Int = 12, progress: (String) -> Unit): Int {
-        if (Build.VERSION.SDK_INT < 29) throw IllegalStateException("Android 10 minimum")
         val stamp = SimpleDateFormat("yyyyMMdd-HHmm", Locale.FRANCE).format(Date())
         var written = 0
         progress("Rapport…")
@@ -160,7 +159,20 @@ object CanDiagnostic {
         return written
     }
 
+    /** Android 9 et moins : besoin de l'autorisation "stockage" pour ecrire dans Telechargements. */
+    fun needsStoragePermission(ctx: Context): Boolean =
+        Build.VERSION.SDK_INT < 29 &&
+            androidx.core.content.ContextCompat.checkSelfPermission(ctx, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+            PackageManager.PERMISSION_GRANTED
+
     private fun write(ctx: Context, name: String, mime: String, body: (java.io.OutputStream) -> Unit) {
+        if (Build.VERSION.SDK_INT < 29) {
+            @Suppress("DEPRECATION")
+            val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "ClioDiag")
+            if (!dir.exists() && !dir.mkdirs()) throw IllegalStateException("Impossible de créer ${dir.path}")
+            File(dir, name).outputStream().use(body)
+            return
+        }
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             put(MediaStore.MediaColumns.MIME_TYPE, mime)

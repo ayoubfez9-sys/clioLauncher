@@ -1,5 +1,7 @@
 package fr.ayoub.cliolauncher.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -57,6 +59,26 @@ fun CanDiagScreen() {
     var status by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
 
+    fun startExport() {
+        val text = report ?: return
+        busy = true
+        status = "Export en cours…"
+        scope.launch {
+            status = try {
+                val n = withContext(Dispatchers.IO) {
+                    CanDiagnostic.export(ctx, text) { msg -> status = "Copie : $msg" }
+                }
+                "Terminé : $n fichier(s) dans Téléchargements/ClioDiag"
+            } catch (e: Exception) {
+                "Échec de l'export : ${e.message}"
+            }
+            busy = false
+        }
+    }
+    val askStorage = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        if (ok) startExport() else status = "Autorisation « stockage » refusée : export impossible"
+    }
+
     LaunchedEffect(Unit) {
         report = withContext(Dispatchers.IO) {
             try { CanDiagnostic.report(ctx) } catch (e: Exception) { "Erreur pendant l'analyse : ${e.message}" }
@@ -94,19 +116,10 @@ fun CanDiagScreen() {
                         .background(if (busy || report == null) C.Panel2 else C.Accent)
                         .border(1.dp, C.Stroke, RoundedCornerShape(12.dp))
                         .clickable(enabled = !busy && report != null) {
-                            val text = report ?: return@clickable
-                            busy = true
-                            status = "Export en cours…"
-                            scope.launch {
-                                status = try {
-                                    val n = withContext(Dispatchers.IO) {
-                                        CanDiagnostic.export(ctx, text) { msg -> status = "Copie : $msg" }
-                                    }
-                                    "Terminé : $n fichier(s) dans Téléchargements/ClioDiag"
-                                } catch (e: Exception) {
-                                    "Échec de l'export : ${e.message}"
-                                }
-                                busy = false
+                            if (CanDiagnostic.needsStoragePermission(ctx)) {
+                                askStorage.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            } else {
+                                startExport()
                             }
                         },
                     contentAlignment = Alignment.Center,
