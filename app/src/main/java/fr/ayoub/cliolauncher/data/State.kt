@@ -66,7 +66,7 @@ object AppSettings {
     /** Suivre les portes et les feux de la vraie voiture (boitier CAN). */
     var canSync by mutableStateOf(true)
     /** Couleur de carrosserie (ARGB), utilisee par le modele 3D a l'etape 2. */
-    var bodyColor by mutableStateOf(0xFF1F5FD0.toInt())
+    var bodyColor by mutableStateOf(0xFF0A6CD8.toInt())
 
     fun load(ctx: Context) {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -77,6 +77,8 @@ object AppSettings {
         liteMode = sp.getBoolean("liteMode", false)
         canSync = sp.getBoolean("canSync", true)
         bodyColor = sp.getInt("bodyColor", bodyColor)
+        // ancienne teinte par defaut -> vraie teinte de la Clio (relevee sur les photos)
+        if (bodyColor == 0xFF1F5FD0.toInt()) bodyColor = 0xFF0A6CD8.toInt()
     }
 
     fun save(ctx: Context) {

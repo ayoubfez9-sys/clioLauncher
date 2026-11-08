@@ -212,7 +212,7 @@ private fun InfoLine(label: String, value: String, dot: Color) {
 
 /** Couleurs de carrosserie proposees (approximations). */
 private val BodyColors = listOf(
-    "Bleu Enedis" to 0xFF1F5FD0.toInt(),
+    "Ma Clio" to 0xFF0A6CD8.toInt(),
     "Bleu nuit" to 0xFF1B2A4A.toInt(),
     "Blanc" to 0xFFE6EAEE.toInt(),
     "Gris" to 0xFF7D838A.toInt(),

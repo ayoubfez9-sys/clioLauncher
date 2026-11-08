@@ -225,7 +225,7 @@ object GlbLoader {
             "inter" -> Material(false, floatArrayOf(0.035f, 0.035f, 0.04f), 0.8f, 0f, 0f, 1f)
             "tyre" -> Material(false, floatArrayOf(0.016f, 0.016f, 0.017f), 0.85f, 0f, 0f, 1f)
             "disk" -> Material(false, floatArrayOf(0.22f, 0.22f, 0.23f), 0.45f, 0.8f, 0f, 1f)
-            "material" -> Material(false, floatArrayOf(0.50f, 0.52f, 0.55f), 0.28f, 1f, 0f, 1f)
+            "material" -> Material(false, floatArrayOf(0.62f, 0.63f, 0.66f), 0.30f, 1f, 0f, 1f)
             "lights" -> Material(false, floatArrayOf(0.50f, 0.03f, 0.03f), 0.2f, 0f, 0.8f, 1f, light = 2)
             "head" -> Material(false, floatArrayOf(0.72f, 0.74f, 0.78f), 0.12f, 1f, 0f, 1f, light = 1)
             else -> Material(false, base, 0.6f, 0f, 0.2f, 1f)

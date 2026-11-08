@@ -35,7 +35,7 @@ class CarView(context: Context, private val liteAtStart: Boolean) : TextureView(
         private const val TAG = "CarView"
     }
 
-    @Volatile var bodyColor: Int = 0xFF1F5FD0.toInt()
+    @Volatile var bodyColor: Int = 0xFF0A6CD8.toInt()
     @Volatile var lite: Boolean = liteAtStart
     @Volatile var lightsOn: Boolean = false
     @Volatile var doors: Int = 0

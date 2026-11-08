@@ -53,6 +53,23 @@ float doorZone(vec3 p, float side, float zc, float zh) {
     return s * z * y;
 }
 
+// Pieces de la carrosserie qui ne sont pas peintes sur la vraie Clio (photos du 8 nov. 2026).
+// 0 = peinture, 1 = plastique noir, 2 = gris fonce, 3 = chrome
+int trimKind(vec3 p, vec3 n) {
+    float ax = abs(p.x);
+    if (p.z > 1.70) {
+        if (ax / 0.095 + abs(p.y - 0.635) / 0.085 < 1.0) return 3;          // losange Renault (chrome)
+        if (ax < 0.40 && p.y > 0.57 && p.y < 0.70) return 1;                // bandeau noir entre les phares
+        if (ax < 0.72 && p.y > 0.14 && p.y < 0.40) return 1;                // entree d'air basse
+    }
+    if (p.z < -1.74 && p.y < 0.42) return 2;                                 // bas du pare-chocs arriere
+    if (ax > 0.80 && abs(n.x) > 0.5 && p.y > 0.29 && p.y < 0.40
+        && p.z > -0.98 && p.z < 0.80) return 1;                              // baguettes de bas de porte
+    if (abs(n.x) > 0.45 && p.y > 0.92 && p.y < 1.30
+        && p.z > -1.18 && p.z < 0.95) return 1;                              // montants et encadrements de vitres
+    return 0;
+}
+
 float doorGlow(vec3 w) {
     if (uDoors == 0) return 0.0;
     vec3 p = vec3(uYaw.x * w.x - uYaw.y * w.z, w.y, uYaw.y * w.x + uYaw.x * w.z);
@@ -79,7 +96,7 @@ vec3 env(vec3 d) {
     float band = smoothstep(0.20, 0.02, abs(y - 0.22));
     c += vec3(0.80, 0.90, 1.0) * 1.6 * band * smoothstep(0.90, 1.0, cos(a - 0.9));
     c += vec3(0.80, 0.90, 1.0) * 1.1 * band * smoothstep(0.92, 1.0, cos(a + 2.3));
-    c += uAccent * 0.6 * smoothstep(-0.02, -0.40, y);
+    c += uAccent * 0.22 * smoothstep(-0.02, -0.40, y);
     return c;
 }
 
@@ -93,26 +110,37 @@ void main() {
     float NV = max(dot(N, V), 0.0);
     float NH = max(dot(N, H), 0.0);
 
-    vec3 albedo = uBase * (1.0 - uMetal);
+    vec3 base = uBase; float rough = uRough; float metal = uMetal; float coat = uCoat;
+    int trim = 0;
+    if (uPaint == 1) {
+        vec3 lp = vec3(uYaw.x * vWorld.x - uYaw.y * vWorld.z, vWorld.y, uYaw.y * vWorld.x + uYaw.x * vWorld.z);
+        vec3 ln = vec3(uYaw.x * N.x - uYaw.y * N.z, N.y, uYaw.y * N.x + uYaw.x * N.z);
+        trim = trimKind(lp, ln);
+        if (trim == 1) { base = vec3(0.012, 0.012, 0.014); rough = 0.45; coat = 0.30; }
+        else if (trim == 2) { base = vec3(0.030, 0.034, 0.042); rough = 0.65; coat = 0.12; }
+        else if (trim == 3) { base = vec3(0.80, 0.81, 0.83); metal = 1.0; rough = 0.12; coat = 0.0; }
+    }
+
+    vec3 albedo = base * (1.0 - metal);
     vec3 ambient = mix(vec3(0.030, 0.038, 0.055), vec3(0.20, 0.22, 0.27), 0.5 + 0.5 * N.y);
     vec3 col = albedo * (ambient + vec3(1.0, 0.97, 0.93) * NL * 0.95);
 
-    vec3 F0 = mix(vec3(0.04), uBase, uMetal);
-    float shin = mix(300.0, 6.0, uRough);
+    vec3 F0 = mix(vec3(0.04), base, metal);
+    float shin = mix(300.0, 6.0, rough);
     col += F0 * pow(NH, shin) * (shin + 8.0) / 30.0 * NL;
 
     float fres = pow(1.0 - NV, 5.0);
     if (uLite == 0) {
         vec3 e = env(reflect(-V, N));
-        col += e * (F0 + (1.0 - F0) * fres) * (1.0 - 0.85 * uRough) * mix(0.35, 1.0, uMetal);
-        col += e * uCoat * (0.08 + 0.92 * fres);
+        col += e * (F0 + (1.0 - F0) * fres) * (1.0 - 0.85 * rough) * mix(0.35, 1.0, metal);
+        col += e * coat * (0.08 + 0.92 * fres);
     } else {
-        col += vec3(0.20, 0.23, 0.28) * uCoat * fres;
-        col += vec3(0.6) * uCoat * pow(NH, 80.0) * NL;
-        col += F0 * vec3(0.30, 0.32, 0.36) * (1.0 - 0.6 * uRough);
+        col += vec3(0.20, 0.23, 0.28) * coat * fres;
+        col += vec3(0.6) * coat * pow(NH, 80.0) * NL;
+        col += F0 * vec3(0.30, 0.32, 0.36) * (1.0 - 0.6 * rough);
     }
     col += uEmissive;
-    if (uPaint == 1) col = mix(col, vec3(1.0, 0.40, 0.03), doorGlow(vWorld) * 0.85);
+    if (uPaint == 1 && trim == 0) col = mix(col, vec3(1.0, 0.40, 0.03), doorGlow(vWorld) * 0.85);
     col = vec3(1.0) - exp(-col * 1.35);   // compression douce des hautes lumieres
     col = pow(col, vec3(1.0 / 2.2));
     fragColor = vec4(col * uAlpha, uAlpha);
