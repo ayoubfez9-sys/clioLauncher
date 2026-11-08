@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Fonts.init(this)
         AppSettings.load(this)
-        CarBridge.start()
+        CarBridge.start(this)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // On cache seulement la barre d'etat : la barre de navigation Junsun
         // (accueil, retour, volume) reste visible.

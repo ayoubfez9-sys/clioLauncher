@@ -103,7 +103,7 @@ object CanDiagnostic {
         sb.appendLine("--- API du fabricant ---")
         sb.append(CarBridge.describeApis())
         val snap = try { CarBridge.read() } catch (t: Throwable) { null }
-        sb.appendLine("Lecture : portes=${snap?.doorsRaw} phares=${snap?.headlight} (${snap?.headlightError ?: "ok"}) batterie=${snap?.battery} vitesse='${snap?.speedRaw}'")
+        sb.appendLine("Lecture : portes=${snap?.doorsRaw} phares=${snap?.headlight} (${snap?.headlightError ?: "ok"}) batterie=${snap?.battery} vitesse='${snap?.speedRaw}' reglages=${snap?.junsunSettings}")
         sb.appendLine()
 
         val cands = candidates(ctx)

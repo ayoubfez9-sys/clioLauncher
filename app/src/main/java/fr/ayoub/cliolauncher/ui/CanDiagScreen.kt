@@ -109,7 +109,7 @@ fun CanDiagScreen() {
                     val names = listOf("AV gauche", "AV droite", "AR gauche", "AR droite", "Coffre")
                     names.forEachIndexed { i, n ->
                         val raw = snap.doorsRaw.getOrElse(i) { "" }
-                        val txt = when (raw) { "2" -> "OUVERTE"; "1" -> "fermée"; "" -> "illisible"; else -> "« $raw »" }
+                        val txt = when (raw) { "2" -> "OUVERTE"; "1" -> "fermée (1)"; "" -> "vide / illisible"; else -> "« $raw »" }
                         Row {
                             T(n, 14.sp, Fonts.medium, C.Muted, modifier = Modifier.width(110.dp))
                             T(txt, 14.sp, Fonts.bold, if (raw == "2") C.Warn else if (raw == "1") C.Ok else C.Muted)
@@ -126,6 +126,12 @@ fun CanDiagScreen() {
                         Row {
                             T("Batterie", 14.sp, Fonts.medium, C.Muted, modifier = Modifier.width(110.dp))
                             T(String.format(java.util.Locale.FRANCE, "%.1f V", b), 14.sp, Fonts.bold, C.Ok)
+                        }
+                    }
+                    snap.junsunSettings.forEach { (k, v) ->
+                        Row {
+                            T(k, 11.sp, Fonts.medium, C.Muted, modifier = Modifier.width(150.dp))
+                            T(v, 12.sp, Fonts.bold, if (v == "1") C.Warn else C.Text)
                         }
                     }
                     if (snap.speedRaw.isNotEmpty()) Row {

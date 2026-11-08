@@ -38,7 +38,19 @@ object CarBridge {
         val battery: Float?,
         val speedRaw: String,
         val headlightError: String?,
+        val junsunSettings: Map<String, String> = emptyMap(),
     )
+
+    /** Reglages caches de l'appli CAN Junsun qui peuvent bloquer l'info des portes. */
+    private val JUNSUN_KEYS = listOf("can_ignore_doorinfo", "close_avm_door_flag", "DRIVING_APP_STATUS")
+    private var appCtx: android.content.Context? = null
+
+    private fun junsunSettings(): Map<String, String> {
+        val cr = appCtx?.contentResolver ?: return emptyMap()
+        return JUNSUN_KEYS.associateWith { k ->
+            try { android.provider.Settings.System.getString(cr, k) ?: "absent" } catch (t: Throwable) { "illisible" }
+        }
+    }
 
     // ---- acces aux API du fabricant (par reflexion : elles n'existent que sur ce systeme)
     private val getProp: Method? = try {
@@ -80,7 +92,7 @@ object CarBridge {
         }
         val batt = try { (batteryMethod?.invoke(mcu) as? Number)?.toFloat() } catch (t: Throwable) { null }
         val speed = prop(SPEED_KEY).ifEmpty { prop(SPEED_KEY2) }
-        return Snapshot(DOOR_KEYS.map { prop(it) }, head, batt, speed, headError)
+        return Snapshot(DOOR_KEYS.map { prop(it) }, head, batt, speed, headError, junsunSettings())
     }
 
     /** Liste des fonctions des classes du fabricant (pour le rapport de diagnostic). */
@@ -112,7 +124,8 @@ object CarBridge {
     private val main = Handler(Looper.getMainLooper())
 
     /** Lit les donnees voiture 3 fois par seconde et met a jour VehicleState. */
-    fun start() {
+    fun start(ctx: android.content.Context) {
+        appCtx = ctx.applicationContext
         if (started) return
         started = true
         Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "CarBridge").apply { isDaemon = true } }
