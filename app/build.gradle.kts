@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -71,7 +73,7 @@ val downloadFonts by tasks.registering {
             val f = File(dir, "Rajdhani-$w.ttf")
             if (!f.exists() || f.length() < 1000) {
                 try {
-                    java.net.URI("https://github.com/google/fonts/raw/main/ofl/rajdhani/Rajdhani-$w.ttf")
+                    URI("https://github.com/google/fonts/raw/main/ofl/rajdhani/Rajdhani-$w.ttf")
                         .toURL().openStream().use { input -> f.outputStream().use { input.copyTo(it) } }
                 } catch (e: Exception) {
                     f.delete()
