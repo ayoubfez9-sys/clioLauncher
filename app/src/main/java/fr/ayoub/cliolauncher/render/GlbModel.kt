@@ -218,6 +218,10 @@ object GlbLoader {
         if (node.uppercase().contains("MIRROR_GLASS")) return Material(false, floatArrayOf(0.6f, 0.62f, 0.65f), 0.05f, 1f, 0f, 1f)
         return when (n) {
             "body" -> Material(true, floatArrayOf(0.1f, 0.2f, 0.6f), 0.32f, 0f, 1f, 1f)
+            // pieces decoupees dans la carrosserie par tools/bake.py (d'apres les photos de la vraie Clio)
+            "trim_black" -> Material(false, floatArrayOf(0.012f, 0.012f, 0.014f), 0.4f, 0f, 0.35f, 1f)
+            "trim_grey" -> Material(false, floatArrayOf(0.028f, 0.032f, 0.040f), 0.6f, 0f, 0.15f, 1f)
+            "logo_chrome" -> Material(false, floatArrayOf(0.75f, 0.76f, 0.78f), 0.15f, 1f, 0f, 1f)
             "black" -> Material(false, floatArrayOf(0.012f, 0.012f, 0.014f), 0.55f, 0f, 0.15f, 1f)
             "brake" -> Material(false, floatArrayOf(0.45f, 0.012f, 0.012f), 0.2f, 0f, 0.8f, 1f)
             "light_glass" -> Material(false, floatArrayOf(0.30f, 0.02f, 0.02f), 0.1f, 0f, 1f, 1f, light = 2)
