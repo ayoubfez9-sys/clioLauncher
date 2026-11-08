@@ -145,8 +145,8 @@ fun VehicleScreen() {
                 InfoLine("Portes", "Boutons manuels (${VehicleState.doorsSource.label})", C.Warn)
                 Spacer(Modifier.height(6.dp))
                 T(
-                    "La lecture du boîtier CAN SimpleSoft sera étudiée à l'étape 4. " +
-                        "Si l'autoradio ne la permet pas, ces boutons manuels resteront la solution.",
+                    "Les feux s'allument sur la Clio 3D et une porte ouverte clignote en orange sur la voiture. " +
+                        "La lecture du boîtier CAN SimpleSoft sera étudiée à l'étape 4.",
                     14.sp, Fonts.medium, C.Muted, maxLines = 6,
                 )
             }

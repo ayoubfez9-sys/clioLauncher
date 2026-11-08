@@ -4,6 +4,7 @@ import android.os.SystemClock
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,6 +65,7 @@ import androidx.compose.ui.unit.sp
 import fr.ayoub.cliolauncher.data.AppSettings
 import fr.ayoub.cliolauncher.data.AppState
 import fr.ayoub.cliolauncher.data.AppsRepository
+import fr.ayoub.cliolauncher.data.Door
 import fr.ayoub.cliolauncher.data.Launch
 import fr.ayoub.cliolauncher.data.LeftShortcuts
 import fr.ayoub.cliolauncher.data.Permissions
@@ -226,6 +229,27 @@ private fun CenterPanel(modifier: Modifier) {
             }
         }
 
+        // Bandeau d'alerte si une porte est ouverte
+        val open = Door.entries.filter { VehicleState.isOpen(it) }
+        if (open.isNotEmpty()) {
+            Row(
+                Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(Color(0xFF2A1A05))
+                    .border(1.5.dp, C.Warn, RoundedCornerShape(18.dp))
+                    .clickable { AppState.screen = Screen.VEHICLE }
+                    .padding(horizontal = 14.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Filled.Warning, null, tint = C.Warn, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                T(
+                    if (open.size == 1) open[0].short else "${open.size} OUVERTURES",
+                    14.sp, Fonts.bold, C.Warn, spacing = 1.sp,
+                )
+            }
+        }
+
         // Boutons ronds
         Row(
             Modifier.align(Alignment.BottomEnd).padding(22.dp),
@@ -271,6 +295,8 @@ private fun CarStage(modifier: Modifier) {
                     update = { v ->
                         v.bodyColor = AppSettings.bodyColor
                         v.lite = AppSettings.liteMode
+                        v.lightsOn = VehicleState.lightsOn
+                        v.doors = VehicleState.doorMask()
                     },
                     modifier = Modifier.fillMaxSize(),
                 )

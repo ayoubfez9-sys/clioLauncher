@@ -31,6 +31,8 @@ class CarRenderer(private val model: CarModel) {
     private var uModel = 0; private var uVP = 0; private var uCam = 0; private var uBase = 0
     private var uRough = 0; private var uMetal = 0; private var uCoat = 0; private var uEmissive = 0
     private var uAlpha = 0; private var uLite = 0; private var uAccentC = 0
+    private var uPaint = 0; private var uDoors = 0; private var uTime = 0; private var uYawC = 0; private var uHalfC = 0
+    private var fBeam = 0; private var fDoors = 0; private var fTime = 0
     private var fVP = 0; private var fExt = 0; private var fR = 0; private var fAccent = 0
     private var fYaw = 0; private var fHalf = 0; private var fLite = 0
 
@@ -49,6 +51,9 @@ class CarRenderer(private val model: CarModel) {
         uBase = loc(carProg, "uBase"); uRough = loc(carProg, "uRough"); uMetal = loc(carProg, "uMetal")
         uCoat = loc(carProg, "uCoat"); uEmissive = loc(carProg, "uEmissive"); uAlpha = loc(carProg, "uAlpha")
         uLite = loc(carProg, "uLite"); uAccentC = loc(carProg, "uAccent")
+        uPaint = loc(carProg, "uPaint"); uDoors = loc(carProg, "uDoors"); uTime = loc(carProg, "uTime")
+        uYawC = loc(carProg, "uYaw"); uHalfC = loc(carProg, "uHalf")
+        fBeam = loc(floorProg, "uBeam"); fDoors = loc(floorProg, "uDoors"); fTime = loc(floorProg, "uTime")
         fVP = loc(floorProg, "uViewProj"); fExt = loc(floorProg, "uExt"); fR = loc(floorProg, "uR")
         fAccent = loc(floorProg, "uAccent"); fYaw = loc(floorProg, "uYaw"); fHalf = loc(floorProg, "uHalf")
         fLite = loc(floorProg, "uLite")
@@ -89,7 +94,14 @@ class CarRenderer(private val model: CarModel) {
         GLES30.glBindVertexArray(0)
     }
 
-    fun draw(width: Int, height: Int, yawDeg: Float, pitchDeg: Float, bodyColor: Int, lite: Boolean) {
+    /**
+     * @param light  0 = feux eteints, 1 = allumes (valeurs intermediaires pendant l'allumage)
+     * @param doors  portes ouvertes (bits : 1 AVG, 2 AVD, 4 ARG, 8 ARD, 16 coffre)
+     */
+    fun draw(
+        width: Int, height: Int, yawDeg: Float, pitchDeg: Float, bodyColor: Int, lite: Boolean,
+        light: Float, doors: Int, time: Float,
+    ) {
         GLES30.glViewport(0, 0, width, height)
         GLES30.glClearColor(0f, 0f, 0f, 0f)
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
@@ -120,6 +132,9 @@ class CarRenderer(private val model: CarModel) {
         GLES30.glUniform2f(fYaw, cos(yr).toFloat(), sin(yr).toFloat())
         GLES30.glUniform2f(fHalf, model.halfWidth, model.halfLength)
         GLES30.glUniform1i(fLite, liteI)
+        GLES30.glUniform1f(fBeam, light)
+        GLES30.glUniform1i(fDoors, doors)
+        GLES30.glUniform1f(fTime, time)
         GLES30.glBindVertexArray(floorVao)
         GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4)
         GLES30.glDepthMask(true)
@@ -130,7 +145,10 @@ class CarRenderer(private val model: CarModel) {
         GLES30.glUniform3f(uCam, ex, ey, ez)
         GLES30.glUniform1i(uLite, liteI)
         GLES30.glUniform3fv(uAccentC, 1, accentLin, 0)
-        GLES30.glUniform3f(uEmissive, 0f, 0f, 0f)
+        GLES30.glUniform1i(uDoors, doors)
+        GLES30.glUniform1f(uTime, time)
+        GLES30.glUniform2f(uYawC, cos(yr).toFloat(), sin(yr).toFloat())
+        GLES30.glUniform2f(uHalfC, model.halfWidth, model.halfLength)
         val r = ((bodyColor shr 16) and 0xFF) / 255f
         val g = ((bodyColor shr 8) and 0xFF) / 255f
         val b = (bodyColor and 0xFF) / 255f
@@ -149,6 +167,12 @@ class CarRenderer(private val model: CarModel) {
                 GLES30.glUniform1f(uMetal, m.metal)
                 GLES30.glUniform1f(uCoat, m.coat)
                 GLES30.glUniform1f(uAlpha, m.alpha)
+                GLES30.glUniform1i(uPaint, if (m.paint) 1 else 0)
+                when (m.light) {
+                    1 -> GLES30.glUniform3f(uEmissive, 3.0f * light, 2.8f * light, 2.4f * light)
+                    2 -> GLES30.glUniform3f(uEmissive, 1.4f * light, 0.05f * light, 0.03f * light)
+                    else -> GLES30.glUniform3f(uEmissive, 0f, 0f, 0f)
+                }
                 GLES30.glBindVertexArray(vaos[i])
                 GLES30.glDrawElements(GLES30.GL_TRIANGLES, prim.indices.size, GLES30.GL_UNSIGNED_SHORT, 0)
             }

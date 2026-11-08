@@ -38,7 +38,35 @@ uniform vec3 uEmissive;  // lumiere propre (phares, etape 3)
 uniform float uAlpha;    // 1 = opaque, < 1 = vitres
 uniform int uLite;       // 1 = mode allege
 uniform vec3 uAccent;    // bleu de l'anneau
+uniform int uPaint;      // 1 = carrosserie
+uniform int uDoors;      // portes ouvertes (bits : 1 AVG, 2 AVD, 4 ARG, 8 ARD, 16 coffre)
+uniform float uTime;
+uniform vec2 uYaw;       // cos, sin de la rotation de la voiture
+uniform vec2 uHalf;      // demi-largeur, demi-longueur
 out vec4 fragColor;
+
+// Zone d'une portiere, dans le repere de la voiture (avant = +Z, gauche = +X)
+float doorZone(vec3 p, float side, float zc, float zh) {
+    float s = smoothstep(0.45, 0.80, p.x * side / uHalf.x);
+    float z = 1.0 - smoothstep(zh - 0.06, zh + 0.04, abs(p.z - zc));
+    float y = smoothstep(0.22, 0.32, p.y) * (1.0 - smoothstep(0.98, 1.06, p.y));
+    return s * z * y;
+}
+
+float doorGlow(vec3 w) {
+    if (uDoors == 0) return 0.0;
+    vec3 p = vec3(uYaw.x * w.x - uYaw.y * w.z, w.y, uYaw.y * w.x + uYaw.x * w.z);
+    float g = 0.0;
+    if ((uDoors & 1) != 0) g = max(g, doorZone(p,  1.0,  0.42, 0.50));
+    if ((uDoors & 2) != 0) g = max(g, doorZone(p, -1.0,  0.42, 0.50));
+    if ((uDoors & 4) != 0) g = max(g, doorZone(p,  1.0, -0.62, 0.48));
+    if ((uDoors & 8) != 0) g = max(g, doorZone(p, -1.0, -0.62, 0.48));
+    if ((uDoors & 16) != 0) {
+        float back = smoothstep(-uHalf.y + 0.45, -uHalf.y + 0.25, p.z);
+        g = max(g, back * smoothstep(0.68, 0.78, p.y) * (1.0 - smoothstep(1.40, 1.50, p.y)));
+    }
+    return g * (0.55 + 0.45 * sin(uTime * 5.0));
+}
 
 // Studio virtuel : degrade sombre, grande boite a lumiere au plafond,
 // deux bandes lumineuses laterales et lueur bleue de l'anneau en bas.
@@ -84,6 +112,7 @@ void main() {
         col += F0 * vec3(0.30, 0.32, 0.36) * (1.0 - 0.6 * uRough);
     }
     col += uEmissive;
+    if (uPaint == 1) col = mix(col, vec3(1.0, 0.40, 0.03), doorGlow(vWorld) * 0.85);
     col = vec3(1.0) - exp(-col * 1.35);   // compression douce des hautes lumieres
     col = pow(col, vec3(1.0 / 2.2));
     fragColor = vec4(col * uAlpha, uAlpha);
@@ -114,7 +143,24 @@ uniform vec3 uAccent;    // bleu (espace ecran)
 uniform vec2 uYaw;       // cos, sin de la rotation de la voiture
 uniform vec2 uHalf;      // demi-largeur, demi-longueur de la voiture
 uniform int uLite;
+uniform float uBeam;     // 0 = phares eteints, 1 = allumes
+uniform int uDoors;
+uniform float uTime;
 out vec4 fragColor;
+
+// Faisceau d'un phare au sol (repere voiture : avant = +Z)
+float beam(vec2 q, vec2 o) {
+    vec2 d = q - o;
+    if (d.y <= 0.0) return 0.0;
+    float width = 0.12 + 0.42 * d.y;
+    float cone = 1.0 - smoothstep(0.55, 1.0, abs(d.x) / width);
+    return cone * smoothstep(0.0, 0.35, d.y) * exp(-d.y * 0.42);
+}
+
+float pool(vec2 q, vec2 c, float rad) {
+    return exp(-pow(length(q - c) / rad, 2.0));
+}
+
 void main() {
     float r = length(vP) / uR;
     float disc = 1.0 - smoothstep(0.988, 1.0, r);
@@ -129,13 +175,34 @@ void main() {
     float sd = length(max(dd, 0.0)) + min(max(dd.x, dd.y), 0.0);
     plate *= 1.0 - 0.88 * (1.0 - smoothstep(-0.25, 0.55, sd));
 
+    // phares
+    float fade = 1.0 - smoothstep(1.0, 1.45, r);
+    float hb = 0.0;
+    if (uBeam > 0.0) {
+        hb = beam(q, vec2(uHalf.x * 0.62, uHalf.y * 0.90)) + beam(q, vec2(-uHalf.x * 0.62, uHalf.y * 0.90));
+        hb = min(hb, 1.2) * uBeam * fade;
+    }
+    // portes ouvertes : halo orange au sol a cote de la portiere
+    float dp = 0.0;
+    if (uDoors != 0) {
+        float side = uHalf.x + 0.55;
+        if ((uDoors & 1) != 0) dp += pool(q, vec2( side,  0.42), 0.55);
+        if ((uDoors & 2) != 0) dp += pool(q, vec2(-side,  0.42), 0.55);
+        if ((uDoors & 4) != 0) dp += pool(q, vec2( side, -0.62), 0.55);
+        if ((uDoors & 8) != 0) dp += pool(q, vec2(-side, -0.62), 0.55);
+        if ((uDoors & 16) != 0) dp += pool(q, vec2(0.0, -uHalf.y - 0.55), 0.6);
+        dp = min(dp, 1.0) * (0.55 + 0.45 * sin(uTime * 5.0)) * fade;
+    }
+
     float ring = exp(-pow((r - 1.0) / 0.010, 2.0));
     float glow = exp(-pow((r - 1.0) / 0.055, 2.0)) * 0.45;
     if (uLite == 0) glow += exp(-abs(r - 1.0) / 0.16) * 0.22;
     float inner = exp(-pow((r - 0.86) / 0.005, 2.0)) * 0.30 * disc;
 
-    vec3 light = uAccent * (ring * 1.4 + glow + inner);
-    float a = clamp(max(disc, ring + glow), 0.0, 1.0);
+    vec3 light = uAccent * (ring * 1.4 + glow + inner)
+               + vec3(1.0, 0.92, 0.78) * hb * 0.75
+               + vec3(1.0, 0.55, 0.08) * dp * 0.85;
+    float a = clamp(max(disc, ring + glow + hb * 0.75 + dp * 0.85), 0.0, 1.0);
     vec3 c = plate * disc + light;
     fragColor = vec4(min(c, vec3(a)), a);   // couleurs premultipliees (fond transparent)
 }

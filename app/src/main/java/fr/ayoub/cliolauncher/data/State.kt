@@ -20,8 +20,13 @@ object AppState {
     var resumeTick by mutableIntStateOf(0)
 }
 
-enum class Door(val label: String) {
-    AVG("Avant gauche"), AVD("Avant droite"), ARG("Arrière gauche"), ARD("Arrière droite"), COFFRE("Coffre")
+/** L'ordre compte : il donne les bits envoyes a la 3D. */
+enum class Door(val label: String, val short: String) {
+    AVG("Avant gauche", "PORTE AV GAUCHE"),
+    AVD("Avant droite", "PORTE AV DROITE"),
+    ARG("Arrière gauche", "PORTE AR GAUCHE"),
+    ARD("Arrière droite", "PORTE AR DROITE"),
+    COFFRE("Coffre", "COFFRE OUVERT"),
 }
 
 enum class DataSource(val label: String) { MANUEL("manuel"), GPS("GPS"), CAN("CAN") }
@@ -42,6 +47,9 @@ object VehicleState {
     var speedSource by mutableStateOf(DataSource.GPS)
 
     fun isOpen(d: Door) = doors[d] == true
+
+    /** Portes ouvertes sous forme de bits, pour la 3D (1 AVG, 2 AVD, 4 ARG, 8 ARD, 16 coffre). */
+    fun doorMask(): Int = Door.entries.foldIndexed(0) { i, acc, d -> if (isOpen(d)) acc or (1 shl i) else acc }
     fun toggleDoor(d: Door) { doors[d] = !isOpen(d) }
 }
 

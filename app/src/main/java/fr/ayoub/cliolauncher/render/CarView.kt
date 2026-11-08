@@ -37,6 +37,8 @@ class CarView(context: Context, private val liteAtStart: Boolean) : TextureView(
 
     @Volatile var bodyColor: Int = 0xFF1F5FD0.toInt()
     @Volatile var lite: Boolean = liteAtStart
+    @Volatile var lightsOn: Boolean = false
+    @Volatile var doors: Int = 0
     var onFailed: (() -> Unit)? = null
 
     private val lock = Any()
@@ -152,6 +154,8 @@ class CarView(context: Context, private val liteAtStart: Boolean) : TextureView(
                 var pitch = DEFAULT_PITCH
                 var spin = 0f
                 var recentering = false
+                var lightLevel = if (lightsOn) 1f else 0f
+                var time = 0f
                 var last = System.nanoTime()
                 val frameNs = 1_000_000_000L / 30
 
@@ -187,7 +191,12 @@ class CarView(context: Context, private val liteAtStart: Boolean) : TextureView(
                     }
                     yaw %= 360f
 
-                    renderer.draw(w, h, yaw, pitch, bodyColor, lite)
+                    // allumage / extinction progressifs des feux (~0,3 s)
+                    val target = if (lightsOn) 1f else 0f
+                    lightLevel += (target - lightLevel) * min(1f, dt * 8f)
+                    time += dt
+
+                    renderer.draw(w, h, yaw, pitch, bodyColor, lite, lightLevel, doors, time)
                     if (!egl.swap()) break
 
                     val spent = System.nanoTime() - start

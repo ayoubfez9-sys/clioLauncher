@@ -15,8 +15,8 @@ android {
         minSdk = 26
         // 34 volontairement : evite le mode "bord a bord" force d'Android 15
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.2-3d"
+        versionCode = 3
+        versionName = "0.3-animations"
     }
 
     // Une seule cle de signature, identique sur Android Studio et sur GitHub :

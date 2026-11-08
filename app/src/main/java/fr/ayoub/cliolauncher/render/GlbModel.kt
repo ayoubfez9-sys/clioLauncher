@@ -16,6 +16,7 @@ class Material(
     val metal: Float,
     val coat: Float,
     val alpha: Float,
+    val light: Int = 0,          // 1 = phare avant, 2 = feu arriere (s'allument avec les feux)
 )
 
 /** Une piece a dessiner : sommets (position + normale), triangles, position dans la voiture. */
@@ -206,7 +207,7 @@ object GlbLoader {
             prims += Primitive(p.node, p.vertices, rear.toShortArray(), p.world, p.material)
             prims += Primitive(
                 p.node + "_FRONT", p.vertices, front.toShortArray(), p.world,
-                Material(false, floatArrayOf(0.02f, 0.022f, 0.026f), 0.03f, 0f, 1f, 0.35f),
+                Material(false, floatArrayOf(0.02f, 0.022f, 0.026f), 0.03f, 0f, 1f, 0.35f, light = 1),
             )
         }
     }
@@ -219,14 +220,14 @@ object GlbLoader {
             "body" -> Material(true, floatArrayOf(0.1f, 0.2f, 0.6f), 0.32f, 0f, 1f, 1f)
             "black" -> Material(false, floatArrayOf(0.012f, 0.012f, 0.014f), 0.55f, 0f, 0.15f, 1f)
             "brake" -> Material(false, floatArrayOf(0.45f, 0.012f, 0.012f), 0.2f, 0f, 0.8f, 1f)
-            "light_glass" -> Material(false, floatArrayOf(0.30f, 0.02f, 0.02f), 0.1f, 0f, 1f, 1f)
+            "light_glass" -> Material(false, floatArrayOf(0.30f, 0.02f, 0.02f), 0.1f, 0f, 1f, 1f, light = 2)
             "glass" -> Material(false, floatArrayOf(0.004f, 0.005f, 0.007f), 0.04f, 0f, 1f, 0.82f)
             "inter" -> Material(false, floatArrayOf(0.035f, 0.035f, 0.04f), 0.8f, 0f, 0f, 1f)
             "tyre" -> Material(false, floatArrayOf(0.016f, 0.016f, 0.017f), 0.85f, 0f, 0f, 1f)
             "disk" -> Material(false, floatArrayOf(0.22f, 0.22f, 0.23f), 0.45f, 0.8f, 0f, 1f)
             "material" -> Material(false, floatArrayOf(0.50f, 0.52f, 0.55f), 0.28f, 1f, 0f, 1f)
-            "lights" -> Material(false, floatArrayOf(0.50f, 0.03f, 0.03f), 0.2f, 0f, 0.8f, 1f)
-            "head" -> Material(false, floatArrayOf(0.72f, 0.74f, 0.78f), 0.12f, 1f, 0f, 1f)
+            "lights" -> Material(false, floatArrayOf(0.50f, 0.03f, 0.03f), 0.2f, 0f, 0.8f, 1f, light = 2)
+            "head" -> Material(false, floatArrayOf(0.72f, 0.74f, 0.78f), 0.12f, 1f, 0f, 1f, light = 1)
             else -> Material(false, base, 0.6f, 0f, 0.2f, 1f)
         }
     }
