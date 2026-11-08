@@ -15,8 +15,8 @@ android {
         minSdk = 26
         // 34 volontairement : evite le mode "bord a bord" force d'Android 15
         targetSdk = 34
-        versionCode = 8
-        versionName = "0.6-couleurs"
+        versionCode = 9
+        versionName = "0.6.1-rs-propre"
     }
 
     // Une seule cle de signature, identique sur Android Studio et sur GitHub :

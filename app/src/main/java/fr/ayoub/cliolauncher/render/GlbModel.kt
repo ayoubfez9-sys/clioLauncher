@@ -207,7 +207,7 @@ object GlbLoader {
             prims += Primitive(p.node, p.vertices, rear.toShortArray(), p.world, p.material)
             prims += Primitive(
                 p.node + "_FRONT", p.vertices, front.toShortArray(), p.world,
-                Material(false, floatArrayOf(0.02f, 0.022f, 0.026f), 0.03f, 0f, 1f, 0.35f, light = 1),
+                Material(false, floatArrayOf(0.09f, 0.095f, 0.10f), 0.08f, 0.6f, 0.7f, 0.92f, light = 1),
             )
         }
     }
@@ -221,8 +221,8 @@ object GlbLoader {
             "black" -> Material(false, floatArrayOf(0.012f, 0.012f, 0.014f), 0.55f, 0f, 0.15f, 1f)
             "brake" -> Material(false, floatArrayOf(0.45f, 0.012f, 0.012f), 0.2f, 0f, 0.8f, 1f)
             "light_glass" -> Material(false, floatArrayOf(0.30f, 0.02f, 0.02f), 0.1f, 0f, 1f, 1f, light = 2)
-            "glass" -> Material(false, floatArrayOf(0.004f, 0.005f, 0.007f), 0.04f, 0f, 1f, 0.82f)
-            "inter" -> Material(false, floatArrayOf(0.035f, 0.035f, 0.04f), 0.8f, 0f, 0f, 1f)
+            "glass" -> Material(false, floatArrayOf(0.002f, 0.0025f, 0.003f), 0.05f, 0f, 0.22f, 0.95f)
+            "inter" -> Material(false, floatArrayOf(0.018f, 0.018f, 0.02f), 0.85f, 0f, 0f, 1f)
             "tyre" -> Material(false, floatArrayOf(0.016f, 0.016f, 0.017f), 0.85f, 0f, 0f, 1f)
             "disk" -> Material(false, floatArrayOf(0.22f, 0.22f, 0.23f), 0.45f, 0.8f, 0f, 1f)
             "material" -> Material(false, floatArrayOf(0.62f, 0.63f, 0.66f), 0.30f, 1f, 0f, 1f)
