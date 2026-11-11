@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Car Launcher · Journal</title>
+<!--
+  Car Launcher v1.25 — page « journal » de l'espace Car Launcher (à déposer à côté de la page du rapport, par ex.
+  https://reality-design.fr/carlauncher/journal.html ; sinon régler "journalUrl" dans js/config.js du lanceur).
+  L'autoradio affiche une suite de QR codes : <cette page>#j=<id>.<n°>.<total>.<morceau base64url>.
+  Le premier code ouvre cette page ; « Scanner la suite » lit les autres avec l'appareil photo. Les morceaux sont gardés
+  dans le téléphone (localStorage), puis décompressés (deflate brut). Rien n'est envoyé : le client partage le fichier.
+-->
+<style>
+  :root { --bg: #f2f2f7; --card: #fff; --label: #000; --label2: rgba(60,60,67,.6); --fill: rgba(118,118,128,.12); --accent: #0a84ff; --green: #34c759; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #000; --card: #1c1c1e; --label: #fff; --label2: rgba(235,235,245,.6); --fill: rgba(118,118,128,.24); } }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: var(--bg); color: var(--label); font: 17px/1.4 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 560px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 30px; line-height: 1.15; margin: 10px 0 4px; letter-spacing: -.02em; }
+  .sub { color: var(--label2); margin: 0 0 18px; }
+  .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 6px; margin-top: 12px; }
+  .grid i { height: 34px; border-radius: 9px; background: var(--fill); display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; font-weight: 600; color: var(--label2); }
+  .grid i.ok { background: var(--green); color: #fff; }
+  .big { font-size: 20px; font-weight: 700; }
+  button { width: 100%; height: 52px; border: 0; border-radius: 14px; font: 600 17px/1 inherit; font-family: inherit; background: var(--fill); color: var(--label); margin-top: 10px; }
+  button.primary { background: var(--accent); color: #fff; }
+  video { width: 100%; border-radius: 14px; background: #000; display: none; margin-top: 12px; }
+  pre { white-space: pre-wrap; word-break: break-word; font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; max-height: 50vh; overflow: auto; background: var(--fill); padding: 12px; border-radius: 12px; }
+  .hide { display: none; }
+  .row { display: flex; gap: 10px; } .row button { flex: 1; }
+  .muted { color: var(--label2); font-size: 15px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Journal Car Launcher</h1>
+  <p class="sub" id="intro">Scanne les QR codes affichés sur ton autoradio (Réglages du lanceur › Diagnostic CAN).</p>
+
+  <div class="card" id="prog-card">
+    <div class="big" id="prog">Aucun code lu</div>
+    <div class="grid" id="grid"></div>
+    <video id="cam" playsinline muted></video>
+    <canvas id="cv" class="hide"></canvas>
+    <button class="primary" id="scan">Scanner la suite</button>
+    <p class="muted" id="tip">Vise l'écran de l'autoradio : les codes défilent tout seuls, garde le téléphone immobile une vingtaine de secondes.</p>
+  </div>
+
+  <div class="card hide" id="done">
+    <div class="big">C'est complet ✓</div>
+    <p class="muted" id="meta"></p>
+    <div class="row"><button class="primary" id="share">Envoyer le fichier</button><button id="dl">Télécharger</button></div>
+    <button id="copy">Copier le texte</button>
+    <pre id="out"></pre>
+    <button id="reset">Effacer et recommencer</button>
+  </div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'cl_journal_';
+  var state = null;            // { id, n, parts: {i: chunk} }
+  var $ = function (s) { return document.querySelector(s); };
+
+  function load(id) { try { return JSON.parse(localStorage.getItem(KEY + id)) || null; } catch (e) { return null; } }
+  function save() { try { localStorage.setItem(KEY + state.id, JSON.stringify(state)); localStorage.setItem(KEY + 'last', state.id); } catch (e) {} }
+
+  /* morceau « j=id.i.n.data » (dans l'adresse ou dans un QR code lu par la page) */
+  function take(text) {
+    var m = /[#&?]?j=([a-z0-9]+)\.(\d+)\.(\d+)\.([A-Za-z0-9_-]+)/.exec(text || '');
+    if (!m) return false;
+    var id = m[1], i = +m[2], n = +m[3];
+    if (!state || state.id !== id) state = load(id) || { id: id, n: n, parts: {} };
+    if (state.parts[i]) return false;
+    state.parts[i] = m[4]; save(); render();
+    if (navigator.vibrate) navigator.vibrate(30);
+    return true;
+  }
+  function count() { return state ? Object.keys(state.parts).length : 0; }
+  function render() {
+    if (!state) return;
+    var c = count();
+    $('#prog').textContent = c + ' code' + (c > 1 ? 's' : '') + ' lu' + (c > 1 ? 's' : '') + ' sur ' + state.n;
+    var g = ''; for (var i = 1; i <= state.n; i++) g += '<i class="' + (state.parts[i] ? 'ok' : '') + '">' + i + '</i>';
+    $('#grid').innerHTML = g;
+    if (c >= state.n) finish();
+  }
+
+  function b64u(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  function inflate(bytes) {
+    if (window.DecompressionStream) {
+      try {
+        var ds = new DecompressionStream('deflate-raw');
+        var w = ds.writable.getWriter(); w.write(bytes); w.close();
+        return new Response(ds.readable).arrayBuffer().then(function (ab) { return new TextDecoder().decode(ab); });
+      } catch (e) {}
+    }
+    return new Promise(function (ok, ko) {
+      var s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako_inflate.min.js';
+      s.onload = function () { try { ok(pako.inflateRaw(bytes, { to: 'string' })); } catch (e) { ko(e); } }; s.onerror = ko;
+      document.head.appendChild(s);
+    });
+  }
+  var text = '';
+  function finish() {
+    stopCam();
+    var z = ''; for (var i = 1; i <= state.n; i++) z += state.parts[i];
+    inflate(b64u(z)).then(function (t) {
+      text = t;
+      $('#prog-card').classList.add('hide'); $('#done').classList.remove('hide');
+      $('#intro').textContent = 'Envoie ce fichier à Car Launcher (e-mail, WhatsApp…) pour qu\'on adapte le lanceur à ton autoradio.';
+      $('#meta').textContent = (t.split('\n')[0] || '') + ' · ' + Math.round(t.length / 1024 * 10) / 10 + ' Ko';
+      $('#out').textContent = t;
+    }).catch(function (e) { $('#prog').textContent = 'Lecture impossible : recommence'; });
+  }
+  function fileName() { return 'carlauncher_' + (/apprentissage/.test(text.split('\n')[0]) ? 'apprentissage' : 'journal') + '_' + state.id + '.txt'; }
+  $('#share').onclick = function () {
+    var f = new File([text], fileName(), { type: 'text/plain' });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) navigator.share({ files: [f], title: 'Journal Car Launcher' }).catch(function () {});
+    else if (navigator.share) navigator.share({ title: 'Journal Car Launcher', text: text }).catch(function () {});
+    else $('#dl').click();
+  };
+  $('#dl').onclick = function () { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = fileName(); a.click(); };
+  $('#copy').onclick = function () { navigator.clipboard && navigator.clipboard.writeText(text).then(function () { $('#copy').textContent = 'Copié ✓'; }); };
+  $('#reset').onclick = function () { try { localStorage.removeItem(KEY + state.id); } catch (e) {} location.hash = ''; location.reload(); };
+
+  /* lecture continue des QR codes avec l'appareil photo (jsQR) */
+  var stream = null, raf = 0;
+  function stopCam() { if (raf) cancelAnimationFrame(raf); raf = 0; if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; $('#cam').style.display = 'none'; $('#scan').textContent = 'Scanner la suite'; }
+  function loadJsQR(cb) {
+    if (window.jsQR) return cb();
+    var s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'; s.onload = cb;
+    s.onerror = function () { $('#tip').textContent = 'Lecteur de QR code indisponible (connexion ?). Scanne les codes un par un avec l\'appareil photo.'; };
+    document.head.appendChild(s);
+  }
+  $('#scan').onclick = function () {
+    if (stream) { stopCam(); return; }
+    loadJsQR(function () {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }).then(function (s) {
+        stream = s; var v = $('#cam'); v.srcObject = s; v.style.display = 'block'; v.play(); $('#scan').textContent = 'Arrêter la caméra';
+        var cv = $('#cv'), cx = cv.getContext('2d', { willReadFrequently: true });
+        (function loop() {
+          if (!stream) return;
+          if (v.readyState === v.HAVE_ENOUGH_DATA) {
+            var w = v.videoWidth, h = v.videoHeight, sc = Math.min(1, 900 / Math.max(w, h));
+            cv.width = w * sc; cv.height = h * sc; cx.drawImage(v, 0, 0, cv.width, cv.height);
+            var r = jsQR(cx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height, { inversionAttempts: 'dontInvert' });
+            if (r && r.data) take(r.data);
+          }
+          raf = requestAnimationFrame(loop);
+        })();
+      }).catch(function () { $('#tip').textContent = 'Autorise l\'appareil photo pour lire la suite, ou scanne les codes un par un avec l\'appareil photo du téléphone.'; });
+    });
+  };
+
+  // ouverture par un QR code : le morceau est dans l'adresse
+  if (!take(location.hash)) { var last = null; try { last = localStorage.getItem(KEY + 'last'); } catch (e) {} if (last) { state = load(last); render(); } }
+  if (state && count() < state.n) $('#intro').textContent = 'Encore ' + (state.n - count()) + ' code' + (state.n - count() > 1 ? 's' : '') + ' : touche « Scanner la suite » et vise l\'écran de l\'autoradio.';
+})();
+</script>
+</body>
+</html>

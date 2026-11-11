@@ -1,0 +1,444 @@
+Lanceur Ibiza - projet Android Studio
+
+1. Android Studio > Open > choisir ce dossier (IbizaLauncher).
+2. Laisser Gradle synchroniser (Android SDK 34 requis, Android Studio le propose).
+3. Emulateur conseillé : tablette paysage 1024 x 600 (ou 1280 x 720), API 28 à 34.
+4. Run 'app'. Sur l'émulateur : touche Accueil > choisir Ibiza > Toujours.
+5. Pour tester portes et radars sans voiture : appui long sur l'horloge > Réglages du lanceur > Simuler.
+
+L'interface web est dans app/src/main/assets/www (HTML/CSS/JS). Après modification, relancer Run.
+
+Version 1.1
+- Rotation de la voiture : vues décodées une seule fois et dessinées dans un canvas, vrai fondu enchaîné, plus de rebond au lâcher (supprime les saccades).
+- Vue du haut : toit plein couleur carrosserie (pas de toit ouvrant), proportions arrière d'après le plan 5 portes (pavillon, lunette, hayon), montant central noir, séparation de vitre de porte arrière, poignée arrière ; calque du hayon ouvert recalé.
+- Vue 3D : bord des portes avant ouvertes nettoyé (liseré gris en dents de scie), points parasites retirés sur le plateau.
+
+Version 1.2
+- Effet verre désactivé : en thème clair, les cartes deviennent claires (avant : texte noir sur carte noire).
+- Fond d'écran clair (gris, blanc) : noms des apps et points de page passent en foncé automatiquement, quel que soit le thème.
+
+Version 1.3
+- Thème sombre sur fond d'écran clair : noms des apps de nouveau en blanc, et le fond est assombri pour qu'ils restent lisibles (la v1.2 les passait en noir sur gris).
+
+Version 1.4
+- Vue 3D (modèle 3 portes) : une porte arrière ouverte fait pivoter la voiture et ouvre la porte avant du même côté.
+  La liste des ouvrants, le statut et la vue du haut indiquent bien la porte arrière.
+- Réglages > Tester sans la voiture : ajout de « Simuler : porte arrière gauche ».
+
+Version 1.5
+- Lisibilité : textes plus gros et plus contrastés partout ; Réglages > Taille de l'interface (Normale / Grande / Très grande, « Grande » par défaut).
+- Voiture 3D plus grande sur l'accueil.
+- Fenêtre flottante (par-dessus les autres apps) et panneau « activité en direct » : vue du haut couchée (avant à gauche), beaucoup plus grande, texte plus gros.
+- Carte musique : le gestionnaire de fichiers n'est plus pris pour le lecteur de musique. Réglages > Applis par défaut : choix manuel de Musique, Radio, Navigation, Téléphone, Son et de l'appli CAN.
+  Toucher la pochette ouvre l'appli qui joue (radio comprise).
+- Lecture / pause : le bouton bascule vraiment (touche LECTURE/PAUSE quand l'appli ne donne pas son état, cas de la radio d'origine).
+- Radio d'origine : nom de station / fréquence récupérés par sa notification, par les diffusions du système, ou en lisant l'écran de la radio (accessibilité).
+- Données CAN (boîtier VW -> Junsun) : nouvelle page Véhicule > Ordinateur (extérieur, eau, huile, batterie, révision, vidange, autonomie, conso, vitesse moyenne, kilométrage)
+  et pastille « Révision » sur l'accueil. Sources lues, dans l'ordre :
+    1. diffusions du système : le lanceur analyse les applis CAN / voiture / lanceur d'origine du poste, y relève les actions d'Intent et s'y abonne ;
+    2. propriétés système (getprop) ;
+    3. journal système (logcat), si autorisé une fois par adb :  adb shell pm grant fr.ibiza.launcher android.permission.READ_LOGS
+    4. lecture des écrans par l'accessibilité : ouvrir une fois l'écran « Infos véhicule / Ordinateur de bord » de l'appli CAN suffit à remplir les valeurs
+       (elles sont gardées au redémarrage), toasts « Porte ouverte » compris.
+  Réglages > Données CAN du poste : « Analyser » (liste les applis et actions trouvées dans le journal) et « Copier les APK CAN »
+  (copie dans Android/data/fr.ibiza.launcher/files/apk, à m'envoyer avec ibiza_diag.txt pour décoder exactement le format du poste).
+
+Correspondance perso (facultatif) : Android/data/fr.ibiza.launcher/files/ibiza_map.json
+  { "package": "com.paquet.de.la.fenetre.portes",
+    "doors": { "fl": "id_vue", "fr": "...", "rl": "...", "rr": "...", "trunk": "...", "hood": "..." },
+    "radar": "id_vue",
+    "broadcasts": [ "com.exemple.ACTION_A_ECOUTER" ] }
+
+Version 1.6 (d'après le journal du poste Junsun MT8163 « hcn »)
+- Portes : lues dans les propriétés système persist.vendor.cem.cardoor1..5 (1 = fermée, 2 = ouverte), toutes les 0,5 s,
+  même quand le lanceur est en arrière-plan. Corrige « 4 ouvrants ouverts » bloqué (la v1.5 prenait « 1 » pour « ouvert »).
+  Ordre supposé : 1 avant gauche (vérifié), 2 avant droite, 3 arrière gauche, 4 arrière droite, 5 coffre.
+  Si une porte ne correspond pas : ibiza_map.json -> "cemDoors": [0,1,2,3,4] (index fl fr rl rr trunk hood pour cardoor1..5).
+- Ordinateur de bord : lecture dédiée de l'écran CarCan (com.hcn.autocan) : carburant restant, batterie, régime, vitesse,
+  kilométrage, température extérieure, frein à main, ceinture, lave-glace. Seules les données fournies par la voiture s'affichent.
+- Carte horloge : affiche les 4 premières données disponibles (Ext., Batt., Carbu., Régime…).
+- Radio d'origine / lecteur USB : lecture du texte de leurs notifications « maison ».
+- Dock : l'emplacement Musique qui pointait sur le gestionnaire de fichiers est corrigé automatiquement.
+- Journal exporté : commence par un instantané des propriétés système utiles.
+
+Version 1.7
+- Véhicule > Entretien : saisie manuelle des entretiens (vidange, révision, filtres, bougies, liquide de frein, distribution,
+  contrôle technique). Pour chacun : date + kilométrage de la dernière fois et intervalle (km et/ou mois, au premier atteint).
+  Le reste à faire est calculé avec le kilométrage réel lu dans CarCan. Bouton « Fait aujourd'hui à … km ». Historique.
+  Valeurs par défaut = plan d'entretien fixe habituel Seat Ibiza, à vérifier dans le carnet (distribution : selon le moteur).
+- Accueil : la pastille « Entretien » montre la prochaine échéance (orange si proche, rouge si dépassée).
+
+Version 1.8 (après analyse de l'APK CarCan com.hcn.autocan v43)
+- Constat : CarCan ne publie ses données d'ordinateur de bord (carburant, km, batterie, régime, frein, ceinture) qu'à son propre
+  écran. Son service « ICustomDataServices » n'envoie rien. Seuls portes, clignotants, radars, vitesse et angle volant sont
+  publiés en direct (propriétés persist.vendor.cem.*).
+- Ordi > « Actualiser » : ouvre CarCan, touche « CarInfo », lit l'écran puis revient sur le lanceur (≈ 2 s).
+- Réglages > Lecture auto de l'ordinateur de bord : au démarrage (défaut), ou démarrage + toutes les 15 min (seulement quand
+  l'accueil Ibiza est affiché, jamais par-dessus CarPlay), ou désactivée.
+- Vitesse : lue sur le CAN quand le poste la fournit (sinon GPS).
+- Clignotants affichés à côté de « Ibiza » (persist.vendor.cem.light0 / light1).
+- Ordre des portes confirmé dans CarCan : cardoor1 AVG, 2 AVD, 3 ARG, 4 ARD, 5 coffre.
+
+Version 1.9 (nouvelle 3D 5 portes)
+- Vue 3D entièrement refaite d'après le modèle 5 portes : rendu studio photoréaliste (Cycles), vert lime métallisé,
+  jantes alu gris satiné avec cache central et logo SEAT, écrous, rétroviseurs à la bonne taille, plaques noires logo SEAT
+  avant et arrière, vitres sans déformation, habitacle et coffre éclairés, plateau tournant sombre à liseré lumineux.
+- Portes : vraies charnières, encadrements de vitres solidaires des portes ; chaque porte s'anime à son tour,
+  vue de 3/4 arrière du côté concerné (on voit l'intérieur). Portes ouvertes des deux côtés : vue de face plongeante.
+- Entretien : la caméra tourne autour de la voiture, entre par la lunette arrière et s'installe dans l'habitacle,
+  puis le tableau de bord s'affiche en plein écran avec la carte Entretien à droite (bouton retour en haut à gauche).
+  Mode « léger » ou mouvement réduit : affichage direct du tableau de bord, sans la vidéo.
+
+Version 1.10
+- Ordinateur de bord : la lecture de CarCan est masquée. Le lanceur pose une image figée de lui-même par-dessus l'écran
+  (fenêtre du service d'accessibilité, aucune autorisation en plus), CarCan s'ouvre dessous sans animation, « CarInfo » est
+  touché et lu, puis retour au lanceur sur la même page (sans repasser par l'accueil ni refaire le tour de la voiture).
+  Retour dès que les valeurs sont lues (environ 1 s) ; une pastille « Mise à jour des données du véhicule… » n'apparaît que si
+  ça dure. Les touchers pendant la lecture sont ignorés (ils ne tombent pas dans CarCan). Sécurités : 8 s maxi, rideau retiré
+  au bout de 9 s quoi qu'il arrive. Sans l'accessibilité, ancien fonctionnement (CarCan visible).
+
+Version 1.11
+- Entretien : motorisation Diesel (par défaut) ou Essence, bouton en haut de la liste. Diesel : « Filtre à gasoil »
+  (60 000 km par défaut, modifiable) à la place des bougies ; Essence : l'inverse.
+- Entretiens libres : « Ajouter un entretien » en bas de la liste (nom, intervalle km et/ou mois, note : pièce, garage,
+  prix…). Même suivi que les autres (barre, échéance, historique) ; bouton « Supprimer » (confirmation).
+- Export PDF du carnet (bouton « PDF ») : A4 avec, pour chaque opération, dernière fois, intervalle, prochaine échéance,
+  état (vert / orange / rouge) et historique. Enregistré dans Téléchargements › Ibiza (Android 9 et avant : l'accès au
+  stockage est demandé une fois, sinon dossier Android › data › fr.ibiza.launcher › files › Documents), puis Ouvrir ou
+  Partager (Bluetooth, messagerie…). S'il n'y a pas de lecteur PDF sur le poste, utiliser Partager.
+
+Version 1.12
+- Carte « Prêt à partir » : au démarrage de l'autoradio (et au réveil après plus de 15 min de veille). Autonomie (ou
+  carburant), température extérieure, batterie, prochain entretien, et alertes : batterie faible (< 12 V), lave-glace à
+  remplir, risque de verglas (≤ 3 °C), réserve de carburant (< 60 km ou < 7 L), entretiens bientôt dus ou dépassés,
+  ouvrant ouvert. Se met à jour quand la lecture CarCan arrive ; se ferme seule après 3 s à plus de 10 km/h, ou « C'est parti ».
+  Réglages : activer / désactiver, et « Afficher la carte Prêt à partir » pour la voir.
+- Alerte plein écran « ouvrant ouvert en roulant » : au-delà de 5 km/h (vitesse CAN, sinon GPS), par-dessus toutes les apps
+  (CarPlay compris), vue du haut avec l'ouvrant concerné, 6 bips courts. « OK » la fait taire jusqu'à ce qu'un autre
+  ouvrant s'ouvre, que tout soit fermé ou que la voiture s'arrête. Réglages : activer / désactiver, et « Tester l'alerte ».
+- Correctif 3D : un ouvrant se referme alors qu'un autre est encore ouvert (ex. coffre puis porte conducteur) -> la voiture
+  revient sur la vue de celui resté ouvert (avant : elle restait sur la vue du coffre, porte affichée fermée).
+
+Version 1.13
+- 3D : coffre ouvert en même temps qu'une ou deux portes d'un même côté -> image combinée (porte(s) + hayon ouverts),
+  vue de 3/4 arrière du côté de la porte (6 nouvelles images). Le hayon reste visible quand on ouvre une porte, et
+  inversement ; en refermant l'un, on retrouve l'autre seul.
+- Position par défaut de la voiture : 3/4 avant droit (au démarrage, au petit tour du réveil, et retour automatique
+  quand tout est refermé). Modifiable dans js/config.js -> "homeView" (numéro de vue 0 à 47).
+
+Version 1.14
+- 3D : toutes les combinaisons d'un même côté sont animées (vue de 3/4 arrière de ce côté) : hayon qui s'ouvre / se ferme
+  avec une ou deux portes ouvertes, porte qui s'ouvre / se ferme avec le hayon ouvert, deuxième porte qui s'anime pendant
+  que la première reste ouverte (avec ou sans hayon). Plus aucun ouvrant n'apparaît fermé pendant une animation.
+  92 nouvelles images (door_m<qui bouge>_s<ouverts>_<étape>), chargées au besoin.
+- Vue de face plongeante (portes des deux côtés) : coffre ouvert visible (9 nouvelles images). Capot non géré
+  (pas détecté sur l'Ibiza).
+- Écran « Prêt à partir » en plein écran : s'affiche aussitôt en « Lecture des données du véhicule… » (aucune valeur
+  périmée), sert de rideau pendant la lecture CarCan, puis montre les vraies valeurs ; « C'est parti » -> accueil à jour.
+  Si la lecture échoue : dernières valeurs connues, signalées comme telles. Jamais de lecture par-dessus CarPlay
+  (attend que le lanceur soit affiché).
+
+Version 1.14.1
+- Émulateur Android Studio : plus de faux ouvrant ouvert (ex. coffre) — sans CAN, les détections de secours
+  (propriétés système, textes d'écran) sont coupées. Le mot « boot » d'une propriété (démarrage système) n'est plus pris
+  pour le coffre. Le journal indique la propriété en cause si une détection de secours se déclenche.
+
+Version 1.14.2
+- Lecture CarCan : l'entrée du menu (« Infos car », « CarInfo », « Infos véhicule », OBD…) est cherchée par son texte
+  normalisé (casse, espaces, accents ignorés). Clic par l'accessibilité ; si la page ne change pas, vrai toucher à l'écran
+  au centre de l'entrée (le rideau laisse passer ce toucher). Nécessite la capacité « gestes » du service d'accessibilité :
+  après la mise à jour, désactiver puis réactiver « Ibiza – lecture portes et radars » si le journal indique
+  « toucher refusé ». Le journal indique l'entrée trouvée et la méthode utilisée.
+
+Version 1.15
+- Ordinateur de bord EN DIRECT sans ouvrir CarCan : avec la permission READ_LOGS (une seule fois, par ADB), le lanceur lit
+  dans le journal système les trames que CarCan reçoit du boîtier CAN (« CanService: rev: 2E41… ») et les décode lui-même
+  (profil VW) : régime, vitesse, batterie, température extérieure, kilométrage, carburant, lave-glace. Mise à jour toutes
+  les 2 s. Tant que ces données arrivent, la lecture par CarCan (rideau) n'est plus utilisée ; sinon, elle reprend seule.
+  Commande : adb shell pm grant fr.ibiza.launcher android.permission.READ_LOGS   (puis redémarrer l'autoradio)
+  Réglages > « Ordinateur de bord en direct (journal) » : Non autorisé / Autorisé · en attente / Actif.
+
+Version 1.15.1
+- Lecture CarCan : ouverture DIRECTE sur la page des infos du véhicule (extra « ToFragment » =
+  com.hcn.autocan.SimpleSoft.VW.VWInfoFragment, prévu par CarCan), plus besoin que la page ait été ouverte à la main ;
+  la navigation par le menu reste en secours.
+- Autorisation automatique si l'autoradio est rooté : au démarrage (une fois par jour) et via Réglages >
+  « Ordinateur de bord en direct » > « Essayer l'autorisation automatique (root) ». Accepter la fenêtre root si elle
+  apparaît ; en cas de succès, le lanceur redémarre seul et la lecture en direct s'active. Sans root : aucun effet.
+
+Version 1.15.2
+- Lecture CarCan : quand CarCan tournait déjà, Android ramenait l'ancienne fenêtre (restée sur le menu « Infos car ») sans
+  lui transmettre la demande de page -> l'intention est maintenant remise à CarCan (CLEAR_TOP + SINGLE_TOP).
+- Secours par le menu : les cases du menu CarCan ne réagissent qu'au toucher (pas au clic d'accessibilité) -> vrai toucher
+  sur l'image de la case, puis la case, puis le libellé ; l'écran de CarCan est relu toutes les 1,4 s pendant la lecture.
+  Le toucher demande la capacité « gestes » : désactiver puis réactiver « Ibiza – lecture portes et radars » dans
+  Accessibilité une fois après la mise à jour.
+
+Version 1.16 (version publique)
+- Véhicule configurable (js/config.js : car.name, car.model, car.fuel) ; nom de l'appli dans res/values/strings.xml.
+- Sans pack voiture (carPack: false) : message à la place de la 3D ; sans vue du dessus (topView: false) : liste seule.
+- Images 3D, vue du dessus, vidéo cockpit et clé de signature retirées de la version publique.
+- Réglages > Installation : « Revenir au lanceur d'origine / désinstaller » (choix de l'écran d'accueil d'origine, puis désinstallation).
+- tools/render/render_top.py : génération de la vue du dessus (img/top, img/toph) et de la valeur topBox.
+
+Version 1.22 (version publique, regroupe les 1.17 à 1.22)
+- Rotation de la voiture continue : entre deux vues voisines (7,5°), le fondu enchaîné superposait deux voitures. Avec les
+  fichiers img/car/flow_XX.png (tools/render/flows.py) et "flowMax" dans js/config.js, chaque pixel suit le mouvement réel
+  et la carte graphique (WebGL) dessine la position intermédiaire exacte. Sans WebGL ou sans ces fichiers : fondu enchaîné.
+- Réglages > Disposition de l'accueil : Voiture, Voiture XL (voiture en grand, fine barre en bas), Conduite (vitesse et
+  ordinateur de bord en grand). Mêmes cartes replacées par la grille : rien de plus en mémoire.
+- Réglages > Bibliothèque d'apps : 2 lignes avec grandes icônes (par défaut) ou 3 lignes.
+- Icônes perso en pleine tuile ; Réglages > « Liste des applis pour les icônes perso » écrit
+  Android/data/fr.ibiza.launcher/files/icons/_liste_des_applis.txt (chaque appli avec le nom de fichier de son icône).
+- Textes : plus aucun texte qui sort de sa carte (police réduite jusqu'à un minimum lisible, date courte si besoin), sans
+  recalcul inutile (seuls les textes qui changent sont remesurés).
+- Mémoire (autoradios à 2 Go) : vues de la voiture décodées à la taille affichée ; la carte musique n'écrit que ce qui change.
+- Écran noir au démarrage :
+  · chien de garde : Android interroge l'interface 10 s après chaque retour sur le lanceur puis toutes les 5 min ; sans
+    réponse, rechargement puis recréation de l'écran (3 tentatives au plus en 10 min) ;
+  · moteur web (WebView) planté ou tué faute de mémoire : écran recréé au lieu de rester noir ;
+  · lecture masquée de CarCan : jamais de rideau noir (lecture reportée), arrêt immédiat si une autre appli (CarPlay,
+    téléphone…) passe au premier plan, sans revenir au lanceur par-dessus ; retrait du rideau garanti.
+- Lecture CarCan : si CarCan plante à l'ouverture directe sur sa page d'infos (« Program exception exit now! »), relance par
+  son menu « CarInfo ».
+- Portes : lecture sur un fil dédié toutes les 250 ms ; getprop groupé si le firmware refuse la lecture directe ; sur les
+  postes où persist.vendor.cem.cardoor* arrive en retard (vu : 2 à 5 s sur un RK3326, CarCan 5.0.1), la fenêtre portes de
+  CarCan (« display door info » = Open) donne l'ouvrant tout de suite, la propriété confirme ensuite.
+- Journal : horodaté à la milliseconde, enregistré dans Android/data/fr.ibiza.launcher/files/ibiza_journal.txt (survit aux
+  redémarrages, ajouté à l'export) ; le nom Bluetooth qui bascule sans cesse n'y est plus noté ; erreurs JavaScript notées.
+- Outils : tools/render/flows.py (rotation continue), tools/render/recolor.py (repeindre un pack existant).
+
+Version 1.22.1
+- Autoradios TopWay (TS10 / TS18) : plateforme repérée dans le journal ; nouveau diagnostic Réglages > Données CAN du poste >
+  « Sonder le CAN du poste TopWay (3 min) » : lit en lecture seule les trames du boîtier CAN (classe système TWUtil) et les note
+  dans le journal, pour décoder coffre, vitesse, température et carburant sur ces postes. Voir docs/CAN.md, partie 5.
+- Sans pack voiture : plus aucune image de porte n'est demandée quand un ouvrant s'ouvre (avant : demandes inutiles et
+  erreurs « FileNotFoundException door_xx » dans le journal, travail en trop sur les petites puces).
+
+Version 1.23
+- Packs voiture sans recompiler ni réinstaller : Réglages du lanceur > Voiture 3D > Pack voiture. Un pack est un .zip
+  (pack.json + images, mêmes noms que dans l'appli) importé depuis une clé USB (sélecteur de fichiers d'Android) ou déposé
+  dans Android/data/fr.ibiza.launcher/files/packs (« Dossier du lanceur »). Plusieurs packs installés, miniature réelle de
+  chaque voiture, appui long pour supprimer. Le pack actif remplace les images et complète js/config.js ; il reste installé
+  après une mise à jour du lanceur. Contrôles à l'import : pack.json, identifiant, vues tournantes complètes, fichiers
+  autorisés seulement (zip abîmé, chemins hors du dossier et fichiers étrangers refusés ou ignorés), taille limitée.
+- Packs fournis avec l'appli (assets/packs/<id>.zip) : installés une fois au premier lancement, sans changer la voiture.
+- Outil tools/pack/make_pack.py : fabrique un pack à partir du dossier www (réglages, aperçu, vérifications).
+
+Version 1.23.1
+- Fenêtre « portes / radars » (vue du dessus, sur les autres pages) : le cadrage suit le contenu réel des images du pack
+  (voiture, ouvrants ouverts avec leur halo, arcs des radars avant et arrière). Avant, il était réglé pour l'Ibiza : le
+  hayon ouvert, son halo orange et les radars pouvaient sortir du cadre selon la voiture ou la taille de l'écran.
+- Radars : quand l'image du pack laisse peu de place derrière (ou devant) la voiture, les anneaux se resserrent au lieu
+  d'être coupés ; ils ne sont plus rognés au bord de l'image dans la page Véhicule.
+
+Version 1.24
+- Rapport de compatibilité en QR code : Réglages du lanceur > Diagnostic CAN > Rapport de compatibilité. Le code contient
+  autoradio, Android, puce, firmware, écran, applis CAN, données CAN reçues, version du lanceur et pack actif (compressé,
+  aucune donnée personnelle). Le client le scanne avec son téléphone : la page de l'espace Car Launcher (adresse réglable :
+  "reportUrl" dans js/config.js) le décode et il l'envoie en un geste ; sa fiche « Ma voiture et mon autoradio » se remplit.
+  Rien n'est envoyé depuis la voiture : pas besoin d'internet sur l'autoradio.
+- Nouveaux fichiers : Report.java (rapport), js/qrcode.js (générateur de QR code, licence MIT, Kazuhiko Arase).
+
+Version 1.24.1
+- Changement de pack voiture : le nom de la voiture sur l'accueil et la vue du dessus suivent maintenant le pack choisi.
+  · Le cache du WebView (mémoire comprise) est vidé avant de recharger la page : les fichiers gardent le même nom d'un pack
+    à l'autre (js/config.js, img/top/closed.webp…) et pouvaient rester ceux de la voiture précédente.
+  · Contrôle au chargement : si la page n'affiche pas le pack actif, Android la recharge sans cache (2 essais au plus).
+  · Fenêtre « portes » par-dessus les autres apps et alerte « ouvrant ouvert en roulant » : vue du dessus du pack actif
+    (avant : toujours celle de l'appli). Pack sans img/toph : img/top tournée. Rechargée dès qu'on change de pack.
+- Pack actif : les images de voiture (img/car, img/top, img/toph, img/cockpit) viennent du pack seulement. Avant, un fichier
+  absent du pack était pris dans l'appli (ex. calques rl / rr de la vue du dessus, vues de face, flux de rotation de la
+  voiture intégrée mélangés à ceux du pack).
+- Réglages du pack : les options d'images (rotation fluide, vue du dessus, habitacle, vue de face, animations combinées,
+  ouvrants) ne reprennent plus les valeurs de la voiture intégrée quand le pack ne les fournit pas ; chacune n'est activée
+  que si le pack contient ses images.
+
+Version 1.24.2
+- Autoradios TopWay (TS10 / TS18) : portes lues en direct sur le CAN du poste (classe système TWUtil, lecture seule,
+  ouverte en permanence). Relevé sur une Ford Fiesta 2010 5 portes, TS10 Unisoc UIS8581, boîtier Raise profil
+  « Ford 09-12 Fiesta / highconfig » : messages 0x0505 (arg1 0) et 0x0501 (arg1 0x24), 1er octet 0x40 avant gauche,
+  0x80 avant droite, 0x10 arrière gauche, 0x20 arrière droite, 0x08 coffre et 0x04 capot (à confirmer), 0x00 fermé.
+  Avant, les portes n'étaient lues que dans la fenêtre portes de com.tw.service : elles ne s'affichaient pas sur ce poste.
+  La fenêtre reste le secours tant qu'aucune trame portes n'arrive. Journal : « PORTES TS10 : octet XX -> … ».
+  Bits modifiables dans ibiza_map.json : "ts10DoorBits": [64,128,16,32,8,4] ; "ts10Doors": false pour désactiver.
+- Alerte « ouvrant ouvert en roulant » active aussi sur ces postes (vitesse GPS).
+- Sondage du CAN TopWay (3 min) : utilise la même liaison TWUtil, qui reste ouverte à la fin pour les portes.
+
+Version 1.24.3
+- Accueil : bouton « Personnaliser » à côté de « Véhicule ». Il ouvre une page qui réunit :
+  · Voiture 3D : les packs installés en vignettes (aperçu, nom, taille), toucher pour changer de voiture, appui long pour
+    supprimer, bouton « Importer » (clé USB ou dossier du lanceur) ;
+  · « Comment utiliser ma propre voiture ? » (petit i) : fenêtre en 3 étapes côte à côte. 1 le modèle 3D (quoi
+    vérifier), 2 le pack (le faire soi-même avec les outils du dossier source et une IA, ou le commander sur mesure, sur
+    devis, par un QR code à scanner au téléphone : l'autoradio peut rester hors ligne), 3 l'installer (bouton Importer).
+    Adresse de commande : "packUrl" dans js/config.js (par défaut l'espace Car Launcher, #pack-sur-mesure) ;
+  · Fond d'écran, couleur de l'interface (nouveau : 9 couleurs ou « Par défaut »), thème Auto / Sombre / Clair ;
+  · Icônes perso : explication, liste des applis et rechargement.
+  Mêmes réglages que dans « Réglages du lanceur » (où une ligne mène aussi à cette page).
+- Couleur de l'interface : interrupteurs, sélections, barre de lecture, points de page, onglets et icônes des boutons.
+  « Par défaut » garde l'apparence d'origine.
+- Pack fourni avec l'appli : Renault Clio 4 noir Étoilé (assets/packs/renault-clio-4-noir-etoile.zip, 8,5 Mo, tous les
+  ouvrants, vue de face, animations combinées, vue du dessus). Installé au premier lancement mais PAS activé : le lanceur
+  s'ouvre sans voiture. Dans l'appli, il s'appelle « Modèle par défaut » (champ "bundled" dans la liste des packs).
+- Sans voiture choisie, l'accueil affiche « Aucune voiture 3D choisie » ; toucher ce message ouvre Personnaliser
+  (avant : un message technique sur img/car et ADAPTER.md).
+- « Lecture CAN (accessibilité) » sur les postes dont le fabricant a retiré la page Accessibilité des Paramètres
+  (relevé sur un alps 825X_Pro Autochips, Android 9, écran 1920x720) : avant, le bouton ouvrait l'accueil des
+  Paramètres et l'autorisation était impossible, donc aucune porte lue. Maintenant :
+  · le lanceur cherche une vraie page Accessibilité (action standard ou activité connue) ;
+  · si la permission WRITE_SECURE_SETTINGS a été accordée une fois par adb
+      adb shell pm grant fr.ibiza.launcher android.permission.WRITE_SECURE_SETTINGS
+    le lanceur s'autorise lui-même (au démarrage et au retour à l'accueil, si le poste efface le réglage) ;
+  · sinon une fenêtre explique les deux solutions (adb une fois, ou la loupe des Paramètres) au lieu d'ouvrir
+    l'accueil des Paramètres. Nouveau fichier AccessHelper.java.
+
+Version 1.25.0
+- « Apprendre ma voiture » (Réglages du lanceur › Données CAN du poste), sans adb ni ordinateur : le client suit
+  9 étapes à l'écran (repos, chaque porte, coffre, capot, marche arrière, feux ; 3 ou 5 portes). Pendant ce temps le
+  lanceur relève tout ce qu'une appli normale peut lire : propriétés système (getprop complet, 0,35 s), réglages
+  système (tables System / Global / Secure), diffusions des applis CAN (chaque champ et chaque octet), trames TopWay
+  (TWUtil) et fenêtres des autres applis (accessibilité, si autorisée). Un signal est retenu pour un élément s'il
+  change quand on l'ouvre, revient quand on le ferme, et ne bouge pas tout seul au repos. Même signal pour plusieurs
+  ouvrants avec des bits différents -> décodage par masque. Avance automatique dès que c'est détecté.
+  Le résultat (« carte apprise ») est enregistré (préférences + learn.json) et utilisé en direct : portes, marche
+  arrière et feux (thème auto). Il a la priorité sur les autres sources de portes. « Oublier l'ancien » revient à la
+  détection automatique. Nouveau fichier Learn.java ; Hub.setReverse.
+- Envoi au téléphone par QR codes, sans clé USB ni internet sur l'autoradio : résultat d'apprentissage ou journal
+  récent (compressé, jusqu'à 24 codes qui défilent). Le premier code ouvre la page journal.html de l'espace Car
+  Launcher sur le téléphone ; « Scanner la suite » lit les autres avec l'appareil photo, puis « Envoyer le fichier ».
+  Page fournie : docs/site/journal.html (à déposer sur le site) ; adresse réglable : "journalUrl" dans js/config.js.
+  Nouveau fichier QrExport.java.
+
+Version 1.25.1
+- Apprentissage : on peut ouvrir sa portière pour aller au coffre ou au capot. Relevé sur le Junsun (hcn MT8163) :
+  à l'étape « coffre », la portière conducteur (persist.vendor.cem.cardoor1) bougeait d'abord, l'écran la prenait pour
+  le coffre et passait trop tôt à « Referme le coffre » ; résultat : coffre = portière. Maintenant, à la fin de chaque
+  étape, tous les signaux de l'élément sont réservés : ils sont ignorés aux étapes suivantes (détection, avance
+  automatique, analyse), y compris quand la portière se referme plus tard. Sur un octet partagé (TopWay), les bits des
+  éléments déjà appris sont retirés (portière + coffre ouverts = coffre seul). Deux éléments sur le même signal : celui
+  à qui il a été réservé le garde.
+- Avance automatique un peu moins pressée (signal stable 1,5 s, étape d'au moins 2,5 s).
+- Signal qui varie beaucoup pendant l'étape (distance radar…) : règle « différent du repos » au lieu d'une valeur fixe.
+- La luminosité de l'écran n'est plus écartée d'office : sur beaucoup de postes, c'est elle qui suit les feux.
+
+Version 1.26.0
+- Assistant de démarrage (première installation, et Réglages du lanceur › Installation › Assistant de démarrage) :
+  écran d'accueil, musique (notifications), lecture CAN (accessibilité, avec la solution adb sur les postes sans page
+  Accessibilité), fenêtre par-dessus les apps, puis « Ma voiture » : « Apprendre » (3 min) ou, si le poste donne déjà
+  les portes (propriétés hcn, TopWay, carte apprise), « Vérifier » (les ouvrants s'allument en direct quand on les
+  ouvre ; « Ça ne marche pas » lance l'apprentissage). Coches mises à jour au retour des Paramètres Android ; chaque
+  étape peut être passée. Les mises à jour l'affichent une fois (étapes déjà faites cochées). La carte « Prêt à
+  partir » attend la fin de l'assistant.
+- Page Véhicule : si rien n'est appris et qu'aucune porte n'a jamais été vue ouverte, encart « Portes pas encore
+  reconnues · Apprendre ma voiture » ; sinon ligne « Réapprendre ma voiture ».
+- Radars des postes hcn (Junsun) : persist.vendor.cem.radar0..7 en cm (151 = rien), 0..3 arrière et 4..7 avant par
+  défaut, inversé automatiquement si l'apprentissage a vu bouger 4..7 en marche arrière (réglable : "cemRadar" dans
+  ibiza_map.json). Sur ces postes la caméra est gérée par le microcontrôleur : la marche arrière est déduite des radars
+  arrière (un capteur sous 150 cm). Une marche arrière apprise sur un capteur radar sert seulement à savoir quels
+  capteurs sont à l'arrière.
+- Angle du volant (persist.vendor.cem.angle) : lignes de trajectoire jaunes derrière la voiture dans la vue radars et le
+  panneau en direct (modèle bicyclette ; steerMax 540°, wheelMax 35°, carLen 4,05 m, wheelbase 2,47 m réglables dans
+  js/config.js), angle affiché (« 120° ▸ ») et ligne « Angle du volant » dans la page Véhicule. Sens inversable :
+  Réglages › Tester sans la voiture › Inverser le sens du volant. La voiture se réduit un peu pour laisser voir les lignes.
+
+Version 1.26.1
+- Apprentissage, feux : sur le Junsun (hcn), allumer les phares fait passer la luminosité de l'écran de 162 à 55
+  (Settings.System screen_brightness) ; c'est ce que l'apprentissage retient. Règle « la plus proche » pour la
+  luminosité : un réglage de nuit légèrement modifié (60, 70…) compte toujours comme « phares allumés ».
+- Bouton lecture / pause inversé (Junsun, Bluetooth) : l'état annoncé par la session, ou supposé au premier appui
+  quand l'appli ne dit rien, est maintenant vérifié sur le son réellement joué par Android (isMusicActive) : s'il le
+  contredit plus de 1,5 s (son) ou 3 s (silence), le son gagne et l'icône se corrige. Actif seulement une fois qu'on a vu
+  du son passer par Android, jamais pour la radio. Journal : « MÉDIA : bouton toggle (… : lecture) », « … le son dit … ».
+- Assistant de démarrage fermé en touchant à côté : compte comme « Plus tard » (avant, il revenait à chaque démarrage).
+- Relevé réel (Junsun, 1.25.1) : coffre bien appris malgré la portière ouverte pour y aller ; ordre des portes conforme
+  à CarCan (cardoor3 = arrière gauche, cardoor4 = arrière droite).
+
+Version 1.26.2
+- Apprentissage : nouvelle source « fichiers du noyau » (sysfs). Relevé sur le Junsun (hcn MT8163) : poste câblé pour
+  la caméra avec le fil marche arrière, mais la caméra est gérée par le microcontrôleur ; pendant l'étape marche
+  arrière, rien ne bougeait dans les propriétés, les réglages, les diffusions ni les fenêtres. Les radars d'origine
+  (aide sonore) n'envoient pas de distances : persist.vendor.cem.radar* restent à 151. Au début de l'apprentissage, le
+  lanceur repère les petits fichiers lisibles de /sys/class/switch, /sys/class/extcon, /sys/class/gpio,
+  /sys/devices/platform… dont le nom évoque la marche arrière, la caméra, l'éclairage, le frein à main (jusqu'à 160),
+  puis les relit toutes les 0,35 s. Une marche arrière trouvée là est suivie en direct (relue toutes les 0,3 s).
+  Journal : « APPRENTISSAGE : N fichiers système lisibles retenus ».
+
+Version 1.27.0
+- « Apprendre l'ordinateur de bord » : lecture de l'appli CAN de n'importe quel autoradio, sans adb ni ordinateur.
+  Avant, seul CarCan (com.hcn.autocan) était lu : son paquet, l'extra qui ouvre sa page d'infos et les identifiants de
+  ses vues étaient écrits dans le code. Maintenant le client choisit son appli « voiture » (Réglages > Données CAN du
+  poste, ou page Véhicule > Ordi) ; le lanceur l'ouvre avec une barre « Capturer / Terminer ». Chaque toucher du client
+  est noté puis rejoué dans l'appli (toucher simulé de l'accessibilité) : le chemin vers la page d'infos est enregistré,
+  menus à images compris. « Capturer » relève les textes de la page et leur position ; le lanceur propose quelle valeur
+  est le carburant, la batterie, le kilométrage… (libellés en français, anglais, allemand, espagnol, italien, portugais,
+  russe, polonais, turc, chinois, traductions bancales comprises ; unités km/h, mph, miles, °F, %, gallons converties).
+  De retour dans le lanceur, le client corrige d'un toucher puis enregistre. Plusieurs pages possibles.
+  Nouveaux fichiers : ScreenRead.java (moteur, sans Android, testé par tools/test/ScreenReadTest.java) et CanApp.java.
+- Le profil appris sert à la lecture automatique sous le rideau (même réglage « Lecture auto ») : si l'appli est déjà sur
+  la bonne page, lecture immédiate ; sinon le chemin est rejoué ; écran inattendu = appli relancée depuis son premier
+  écran, une fois. Il sert aussi en direct quand le client ouvre lui-même son appli CAN. Aucun toucher n'est envoyé si
+  le texte repère du chemin n'est pas à l'écran.
+- Profil = petit fichier JSON (Android/data/fr.ibiza.launcher/files/canapp.json), joint au journal envoyé par QR codes
+  avec le relevé brut de la page. Un profil reçu d'un client peut être livré dans l'appli (assets/canapps/<paquet>.json) :
+  les postes qui ont cette appli CAN sont reconnus sans apprentissage.
+- Applis « voiture » pas encore apprises : valeurs reconnues toutes seules quand le client les ouvre, si au moins deux
+  libellés sont compris (ancienne lecture gardée, nouvelle lecture par position en plus).
+- Carburant en % : nouvelle donnée « fuel_pct » (avant, « 45 % » était affiché « 45 L »).
+- Assistant de démarrage : nouvelle étape « Ordinateur de bord » (déjà cochée quand CarCan est présent ou qu'un profil
+  existe) ; la liste des étapes défile sur les petits écrans.
+- Android 13 et plus : l'accessibilité d'une appli installée depuis un fichier APK est bloquée (« Paramètre
+  restreint », interrupteur grisé). « Autoriser la lecture CAN » affiche alors une fiche en trois gestes (Accessibilité,
+  fiche de l'appli > ⋮ > Autoriser les paramètres restreints, Accessibilité) avec les deux raccourcis ; elle se ferme
+  toute seule quand l'autorisation est donnée. Sans effet sur Android 12 et moins.
+- Corrections :
+  · une lecture automatique restée « en cours » (capture d'écran du lanceur jamais revenue) bloquait toutes les
+    suivantes jusqu'au redémarrage : remise à zéro 5 s après son délai ;
+  · service d'accessibilité coupé (réglage désactivé, mise à jour) : le lanceur gardait l'ancien service et croyait
+    encore pouvoir lire ; il le voit maintenant (onUnbind / onDestroy), rideau retiré ;
+  · carte apprise sur une fenêtre (portes) : un changement DANS une fenêtre déjà affichée d'une appli sans « door »
+    dans ses identifiants n'était pas vu, y compris pendant l'apprentissage ;
+  · Learn.evaluate appelé depuis trois fils à la fois : un seul à la fois ;
+  · l'observateur des réglages système gardait l'écran du lanceur en mémoire après une recréation (chien de garde) ;
+  · permission de localisation redemandée à chaque retour sur le lanceur après un refus : une fois par démarrage ;
+  · postes sans propriétés persist.vendor.cem.* : le relevé des portes (4 fois par seconde, avec un processus « sh » à
+    chaque passage quand la lecture directe est refusée) ralentit à un passage toutes les 3 s après 30 s sans rien.
+
+Version 1.27.1
+- Apprendre l'ordinateur de bord, relevé réel sur le Junsun (CarCan v3.88) : aucun toucher n'arrivait à l'appli. Les
+  12 touchers ont été notés, mais CarCan est resté sur son menu (« CarInfo ») ; la capture ne voyait donc que le menu
+  (« aucune page capturée »). Cause probable : la fenêtre transparente qui reçoit les touchers du client, rendue
+  « traversable » 70 ms avant le toucher simulé, l'interceptait encore. Maintenant :
+  · la barre et la fenêtre transparente sont deux fenêtres séparées ; la fenêtre transparente est RETIRÉE pendant le
+    toucher simulé (retrait immédiat), puis remise ;
+  · chaque toucher est vérifié : la page de l'appli doit changer dans les 1,2 s, sinon clic d'accessibilité au même
+    endroit ; le journal dit « toucher transmis, la page a changé » ou « toucher sans effet ». Les touchers sans effet
+    ne sont pas gardés dans le chemin ;
+  · « Main libre » sur la barre : la fenêtre transparente disparaît, le client touche l'appli lui-même. Le lanceur note
+    seulement les changements de page (textes de la page de départ et d'arrivée). Après deux touchers sans effet, il y
+    passe tout seul ;
+  · chemin noté en main libre : à la première lecture automatique, le lanceur essaie les entrées de la page de départ
+    (au plus 4, les plus probables d'abord : « infos », « car », « véhicule »… ; réglages, clim, radar, version écartés),
+    sur le nom, sur l'image au-dessus, puis par clic d'accessibilité ; Retour si une entrée ouvre une autre page. Le
+    toucher qui marche est enregistré dans le profil : les lectures suivantes vont droit au but ;
+  · chaque toucher du chemin garde les textes de la page où il se fait : il n'est rejoué que sur cette page (plus de
+    toucher au hasard sur une page inattendue) ;
+  · page des infos ouverte comme un écran à part (activité exportée) : le profil l'ouvre directement ;
+  · CarCan avec un profil appris : toujours ouvert directement sur sa page des infos (extra « ToFragment »).
+- Rideau (lecture automatique) : le toucher simulé attend deux images + 70 ms après que le rideau est devenu traversable
+  (même défaut possible que ci-dessus, aussi pour le secours par le menu de CarCan).
+- Message de fin quand rien n'est capturé : dit si les touchers ne sont jamais arrivés à l'appli et propose la main libre.
+
+Version 1.27.1-clio (adaptation Renault Clio IV dCi, Junsun RK3326 « hcn », SimpleSoft profil Renault CLIO_XP01)
+- Voiture : « Clio », Renault Clio IV, diesel ; nom de l'appli « Clio Launcher ».
+- Pack Clio 4 noir Étoilé intégré à l'appli (img/car, img/top, img/toph, rotation continue flowMax 104) : affiché dès le
+  premier lancement, portes animées, combinaisons, vue de face, vue du dessus (topBox du pack).
+- Phares : lus par android.carstatus.CarStatus#getHeadLightStatus() (classe du fabricant hcn, la même que ses thèmes
+  d'accueil) ; témoin vert à côté du nom de la voiture.
+- Batterie : lue par android.carsource.McuManager.getBattery() toutes les 10 s, dans l'ordinateur de bord (source « MCU »).
+- CarCan : ouverture directe sur la page « infos véhicule » du profil Renault (com.hcn.autocan.hiworld.ui.carinfo.CarInfoUIFragment)
+  au lieu de la page VW.
+- Constaté sur la voiture : persist.vendor.cem.cardoor1..5 restent à 1 portes ouvertes, même avec « display door info » = Open :
+  le boîtier ne transmet pas les portes avec ce profil (voir docs/CAN.md § 7). Clignotants et vitesse : non décodés par le profil
+  Renault de CarCan (vitesse GPS).
+

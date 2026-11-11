@@ -1,0 +1,9 @@
+Profils d'applis CAN livrés avec le lanceur (v1.27).
+
+Un fichier <paquet>.json par appli CAN connue. Au démarrage, si le client n'a rien appris lui-même et qu'une de ces
+applis est installée sur son autoradio, son profil est utilisé : l'ordinateur de bord est lu sans apprentissage.
+
+Pour ajouter un poste : le client fait « Apprendre l'ordinateur de bord », puis « Envoyer le journal au téléphone
+(QR codes) ». Le journal reçu contient le profil (ligne « Profil appris : {...} ») : copie ce JSON ici dans
+<paquet>.json (ex. com.exemple.canbus.json). Le même fichier, nommé canapp.json et déposé dans
+Android/data/fr.ibiza.launcher/files/, est aussi pris en compte sans recompiler.

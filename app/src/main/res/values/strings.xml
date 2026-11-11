@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Clio Launcher</string>
+    <string name="svc_media">Clio Launcher – lecture en cours</string>
+    <string name="svc_can">Clio Launcher – lecture portes et radars</string>
+    <string name="can_desc">Permet au lanceur de lire la fenêtre portes / radars de l\'autoradio pour l\'afficher dans son propre style. Aucune donnée ne quitte l\'appareil.</string>
+</resources>

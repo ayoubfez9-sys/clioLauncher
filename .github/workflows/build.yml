@@ -1,0 +1,19 @@
+name: Car Launcher Clio (verification)
+on:
+  push:
+    branches: [car-launcher-clio]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Compilation
+        run: chmod +x gradlew && ./gradlew assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CarLauncher-Clio-debug
+          path: app/build/outputs/apk/debug/*.apk

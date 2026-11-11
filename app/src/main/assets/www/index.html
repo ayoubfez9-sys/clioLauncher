@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Ibiza</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app">
+<div id="wall"></div>
+
+<!-- Barre latérale façon CarPlay -->
+<aside id="rail" class="glass glass-rail">
+  <div class="rail-top">
+    <div id="rail-time" class="rail-time">--:--</div>
+    <div class="rail-status"><span id="st-bt" class="st"></span><span id="st-wifi" class="st"></span></div>
+  </div>
+  <nav id="dock" class="dock"></nav>
+  <button id="btn-pages" class="rail-btn press" aria-label="Apps"></button>
+</aside>
+
+<main id="stage">
+  <!-- ACCUEIL -->
+  <section id="page-home" class="page is-active">
+    <div class="home-grid">
+      <article id="card-car" class="glass card card-car">
+        <header class="card-head">
+          <div>
+            <h1 class="t-title2"><span class="car-name">Ibiza</span> <span id="turn" class="turn"><i class="tl">&#9664;</i><i class="hl" title="Feux allumés"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M13 5c-4 0-6 3.1-6 7s2 7 6 7c2.4 0 4-3.1 4-7s-1.6-7-4-7zM2 8h4v1.6H2zm0 3.2h4v1.6H2zm0 3.2h4V16H2z"/></svg></i><i class="tr">&#9654;</i></span></h1>
+            <p id="car-status" class="t-sub"><i class="dot ok"></i><span>Tout est fermé</span></p>
+          </div>
+          <div class="head-btns">
+            <button id="btn-custom" class="chip-btn press" aria-label="Personnaliser"></button>
+            <button id="btn-vehicle" class="chip-btn press" aria-label="Véhicule"></button>
+          </div>
+        </header>
+        <div id="turntable" class="turntable">
+          <div class="showroom"><i class="lp l1"></i><i class="lp l2"></i><i class="lp l3"></i><i class="lp l4"></i><i class="lp l5"></i></div>
+          <img id="tt-floor" class="tt-img" src="img/car/floor.webp" alt="">
+          <div class="nocar-msg"><b>Aucune voiture 3D choisie</b><span>Touche ici pour essayer le modèle par défaut ou ajouter ta propre voiture</span></div>
+          <canvas id="tt-canvas" class="tt-img tt-canvas" width="600" height="335"></canvas>
+          <div id="tt-doors"></div>
+          <img id="tt-floor-hi" class="tt-img hi-img" alt="">
+          <img id="tt-hi" class="tt-img hi-img" alt="">
+          <div id="tt-hint" class="tt-hint">Glisse pour faire tourner</div>
+        </div>
+        <footer id="car-chips" class="car-chips"></footer>
+      </article>
+
+      <div class="col-right">
+        <article id="card-media" class="glass card card-media">
+          <div id="m-bg" class="m-bg"></div>
+          <div class="m-main">
+            <div id="m-art" class="m-art"></div>
+            <div class="m-meta">
+              <div id="m-source" class="t-cap ellip"></div>
+              <div id="m-title" class="m-title">Aucune lecture</div>
+              <div id="m-artist" class="t-sub ellip">Touchez une source pour commencer</div>
+            </div>
+          </div>
+          <div class="m-bottom">
+            <div class="m-progress"><div id="m-bar" class="m-bar"></div></div>
+            <div class="m-times"><span id="m-t0"></span><span id="m-t1"></span></div>
+            <div class="m-ctrl">
+              <button id="m-prev" class="m-btn press" aria-label="Précédent"></button>
+              <button id="m-play" class="m-btn m-play press" aria-label="Lecture"></button>
+              <button id="m-next" class="m-btn press" aria-label="Suivant"></button>
+            </div>
+          </div>
+        </article>
+        <div class="mini-row">
+          <article id="card-clock" class="glass card card-clock press-soft">
+            <div id="c-date" class="t-cap cd-date">—</div>
+            <div class="cd-main">
+              <div id="c-time" class="c-time">--:--</div>
+              <div id="c-speed" class="c-speed"><b id="c-kmh">0</b><span>km/h</span></div>
+            </div>
+            <div class="cd-grid">
+              <div class="cd"><span id="cdl-0">Ext.</span><b id="cd-0">—</b></div>
+              <div class="cd"><span id="cdl-1">Batt.</span><b id="cd-1">—</b></div>
+              <div class="cd"><span id="cdl-2">Carbu.</span><b id="cd-2">—</b></div>
+              <div class="cd"><span id="cdl-3">Régime</span><b id="cd-3">—</b></div>
+            </div>
+          </article>
+          <article class="glass card card-quick">
+            <div id="quick" class="quick"></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BIBLIOTHÈQUE D'APPS -->
+  <section id="page-apps" class="page">
+    <div id="apps-viewport" class="apps-viewport">
+      <div id="apps-track" class="apps-track"></div>
+    </div>
+    <div id="apps-dots" class="dots"></div>
+  </section>
+
+  <!-- VÉHICULE -->
+  <section id="page-vehicle" class="page">
+    <div class="veh-grid">
+      <article class="glass card veh-main">
+        <header class="card-head">
+          <div>
+            <h1 class="t-title2">Véhicule</h1>
+            <p id="veh-status" class="t-sub"><i class="dot ok"></i><span>Tout est fermé</span></p>
+          </div>
+          <div class="seg" id="veh-seg">
+            <button class="seg-b is-on" data-v="doors">Ouvrants</button>
+            <button class="seg-b" data-v="radar">Radars</button>
+            <button class="seg-b" data-v="trip">Ordi</button>
+            <button class="seg-b" data-v="maint">Entretien</button>
+          </div>
+        </header>
+        <div id="topview" class="topview">
+          <img class="tv-base" src="img/top/closed.webp" alt="">
+          <div id="tv-layers"></div>
+          <svg id="radar-svg" class="radar-svg" viewBox="0 0 680 750"></svg>
+        </div>
+        <div id="tripview" class="tripview"></div>
+        <div id="maintview" class="maintview" style="display:none"></div>
+      </article>
+      <aside class="glass card veh-side">
+        <div id="veh-list" class="veh-list"></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- v1.24.3 : PERSONNALISER (voiture 3D, fond d'écran, couleur, thème, icônes perso) -->
+  <section id="page-custom" class="page">
+    <div class="cust-grid">
+      <article class="glass card cust-car">
+        <header class="card-head">
+          <div>
+            <h1 class="t-title2">Personnaliser</h1>
+            <p class="t-sub">Ta voiture en 3D, ton fond d'écran, tes couleurs.</p>
+          </div>
+          <button id="cust-import" class="chip-btn press" aria-label="Importer un pack"></button>
+        </header>
+        <div class="hdr">Voiture 3D</div>
+        <div id="cust-packs" class="cust-packs"></div>
+        <div class="cust-foot">
+          <button id="cust-help" class="cust-help press"></button>
+        </div>
+      </article>
+      <article class="glass card cust-look">
+        <div id="cust-look" class="cust-scroll"></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- RÉGLAGES DU LANCEUR -->
+  <section id="page-settings" class="page">
+    <div class="glass card settings">
+      <header class="card-head"><h1 class="t-title2">Réglages du lanceur</h1></header>
+      <div id="settings-list" class="settings-list"></div>
+    </div>
+  </section>
+</main>
+
+<!-- Activité en direct (portes / radars) -->
+<div id="live" class="live glass" aria-live="polite">
+  <div class="live-pill"><i class="dot warn"></i><span id="live-text">Porte ouverte</span></div>
+  <button id="live-close" class="live-close press" aria-label="Fermer"></button>
+  <div class="live-body">
+    <div class="live-car">
+      <!-- vue du haut couchée (avant à gauche) : même calques que la page Véhicule, tournés de -90° -->
+      <div id="live-rot" class="live-rot">
+        <img class="tv-base" src="img/top/closed.webp" alt="">
+        <div id="live-layers"></div>
+        <svg id="live-radar" class="radar-svg" viewBox="0 0 680 750"></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- v1.13 : écran « Prêt à partir » (sert aussi de rideau pendant la lecture CarCan) -->
+<div id="ready" class="ready" aria-hidden="true"></div>
+
+<!-- Entretien : la caméra entre dans l'habitacle, puis le tableau de bord en plein écran -->
+<div id="cockpit" class="cockpit" aria-hidden="true">
+  <img id="ck-photo" class="ck-media" alt="">
+  <video id="ck-video" class="ck-media" muted playsinline preload="auto" poster="img/cockpit/start.webp" src="img/cockpit/intro.mp4"></video>
+  <div class="ck-shade"></div>
+  <button id="ck-close" class="ck-close glass press" aria-label="Retour"></button>
+  <aside id="ck-card" class="glass card ck-card">
+    <header class="card-head"><div><h1 class="t-title2">Entretien</h1><p class="t-sub car-model">Seat Ibiza</p></div></header>
+    <div id="ck-body" class="maintview"></div>
+  </aside>
+</div>
+
+<div id="sheet-scrim" class="scrim"></div>
+<div id="sheet" class="sheet glass"></div>
+<div id="toast" class="toast glass"></div>
+<input id="wall-file" type="file" accept="image/*" style="display:none">
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/spring.js"></script>
+<script src="js/native.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
