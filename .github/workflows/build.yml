@@ -1,7 +1,9 @@
-name: Car Launcher Clio (verification)
+name: Car Launcher Clio
 on:
   push:
     branches: [car-launcher-clio]
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,7 +15,16 @@ jobs:
           java-version: 17
       - name: Compilation
         run: chmod +x gradlew && ./gradlew assembleDebug --stacktrace
+      - name: Renommer
+        run: cp app/build/outputs/apk/debug/*.apk CarLauncherClio.apk
       - uses: actions/upload-artifact@v4
         with:
           name: CarLauncher-Clio-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: CarLauncherClio.apk
+      - name: Publier le lien direct
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete carlauncher-apk -y --cleanup-tag || true
+          gh release create carlauncher-apk CarLauncherClio.apk --target car-launcher-clio \
+            --title "Car Launcher Clio (voiture noire)" --notes "APK Car Launcher 1.27.1 adapte a la Clio IV, pack noir." --prerelease
